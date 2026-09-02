@@ -59,6 +59,26 @@ def _validate_artifact_id(value: str) -> str:
     return value
 
 
+def validate_repository_path(value: str) -> str:
+    """Validate and return one normalized repository-relative POSIX path."""
+
+    if not value or not value.strip():
+        raise ValueError("path must not be blank")
+    if "\\" in value:
+        raise ValueError("path must use POSIX separators")
+    if value.startswith("/") or value.startswith("./"):
+        raise ValueError("path must be repository-relative and normalized")
+    if "//" in value:
+        raise ValueError("path must not contain repeated separators")
+
+    candidate = PurePosixPath(value)
+    if any(part in {".", ".."} for part in candidate.parts):
+        raise ValueError("path must not contain '.' or '..' segments")
+    if str(candidate) != value:
+        raise ValueError("path must be a normalized repository-relative POSIX path")
+    return value
+
+
 class Provenance(BaseModel):
     """Minimal lineage needed to explain where an artifact came from."""
 
@@ -119,22 +139,8 @@ class ArtifactManifest(BaseModel):
 
     @field_validator("path")
     @classmethod
-    def validate_repository_path(cls, value: str) -> str:
-        if not value or not value.strip():
-            raise ValueError("path must not be blank")
-        if "\\" in value:
-            raise ValueError("path must use POSIX separators")
-        if value.startswith("/") or value.startswith("./"):
-            raise ValueError("path must be repository-relative and normalized")
-        if "//" in value:
-            raise ValueError("path must not contain repeated separators")
-
-        candidate = PurePosixPath(value)
-        if any(part in {".", ".."} for part in candidate.parts):
-            raise ValueError("path must not contain '.' or '..' segments")
-        if str(candidate) != value:
-            raise ValueError("path must be a normalized repository-relative POSIX path")
-        return value
+    def validate_repository_path_field(cls, value: str) -> str:
+        return validate_repository_path(value)
 
     @field_validator("media_type")
     @classmethod
