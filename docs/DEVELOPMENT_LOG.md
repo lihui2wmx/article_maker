@@ -410,10 +410,74 @@ Phase 2B provides per-record atomic writes and repository-level consistency audi
 
 No Claim/Evidence objects, semantic extraction, LLM provider, agent runtime, automatic approval, experiment orchestration, database-backed canonical state, or manuscript generation was introduced.
 
-## Ready next increment — Phase 3A: typed Claim/Evidence contracts
+## 2026-09-02 — Phase 3A: typed Claim/Evidence contracts
 
-**Status:** READY after Phase 2B integration.
+**Branch:** `phase/3a-claim-evidence-contracts`  
+**Integration carrier:** PR #8
+
+**Status:** COMPLETE at implementation/review boundary — bounded-scope audit and latest-head PR CI passed; integration pending.
 
 ### Objective
 
-Define the smallest framework-neutral contracts for candidate/approved `Claim` records and provenance-bearing `Evidence` records, including explicit support/contradiction relations and human claim-approval semantics, without yet implementing extraction agents, retrieval, manuscript generation, or automated novelty judgments.
+Define the smallest framework-neutral contracts for substantive Claims, provenance-bearing Evidence, and explicit support/contradiction interpretation without allowing automated ingestion or agents to silently grant scientific approval.
+
+### Implemented
+
+- added `Claim` with stable `clm-*` identity, ResearchQuestion reference, optional Hypothesis reference, scientific statement, dependency references, proposal attribution, lifecycle, governing Decision reference, and JSON metadata;
+- defined Claim lifecycle as `candidate`, `approved`, `rejected`, and `superseded`;
+- prohibited a candidate Claim from carrying a governing Decision and required a Decision for every non-candidate state;
+- added `Evidence` with stable `ev-*` identity, evidence kind, descriptive record, recorder attribution, one or more repository Artifact sources, optional source locators, and JSON metadata;
+- deliberately gave Evidence no approval lifecycle so provenance/existence is not confused with scientific endorsement;
+- added `ClaimEvidenceLink` with stable `cel-*` identity, explicit `supports | contradicts` relation, rationale, proposal attribution, lifecycle, and governing Decision reference;
+- required a human Decision before a ClaimEvidenceLink can become accepted/rejected/superseded;
+- extended generic Decision subjects with `claim` and `claim_evidence_link` while preserving `authority = human`;
+- centralized shared scientific ID grammars in `src/article_maker/scientific_ids.py`;
+- added `schemas/claim-evidence.schema.json` as the framework-neutral Draft 2020-12 contract and kept the research-state Decision schema aligned;
+- kept Phase 2 registry ownership bounded to ResearchQuestion/Hypothesis resolution while tolerating Phase 3 Decision subjects;
+- documented the contracts in `docs/CLAIM_EVIDENCE.md`;
+- recorded the separation/governance decision in `docs/decisions/ADR-0007-claim-evidence-separation-and-governance.md`;
+- added Python/JSON-Schema contract tests and a Phase 2 compatibility regression test.
+
+### Validation and audit
+
+- `main..phase/3a-claim-evidence-contracts` was audited as ahead-only and limited to Claim/Evidence contracts, shared scientific ID validation, Decision compatibility, Phase 2 boundary compatibility, package exports, tests, documentation/ADR, and development state;
+- PR #8 latest-head CI run `33632642997` completed successfully on head `e08644ba8b25ab190b7de8e0644bfcd0e2739468`;
+- the existing Phase 1/2 suites and new Phase 3A contract/compatibility tests all passed.
+
+### Phase 3A exit conditions
+
+- [x] framework-neutral Claim contract exists;
+- [x] framework-neutral Evidence contract exists with non-empty repository provenance;
+- [x] explicit ClaimEvidenceLink support/contradiction relation exists;
+- [x] Claim approval requires human-governed Decision state;
+- [x] evidence interpretation is separate from Evidence and human-governed when canonical;
+- [x] Decision contract supports Claim and ClaimEvidenceLink subjects;
+- [x] Python and JSON Schema validations cover representative positive/negative cases;
+- [x] Phase 2 registry remains backward-compatible with the extended Decision subject vocabulary;
+- [x] material design choices are recorded in ADR-0007;
+- [x] bounded-scope audit passes;
+- [x] latest-head PR CI passes;
+- [ ] PR #8 merged and main push CI passes.
+
+### Explicitly deferred to Phase 3B
+
+- deterministic persistence layout for Claim/Evidence/ClaimEvidenceLink records;
+- Claim -> ResearchQuestion/Hypothesis existence resolution;
+- Evidence -> Artifact source resolution;
+- ClaimEvidenceLink -> Claim/Evidence resolution;
+- Claim dependency cycle detection and graph audit;
+- Claim/Link -> governing Decision resolution and Decision-history audit;
+- approved-Claim support/contradiction visibility checks;
+- graph materialization/indexing.
+
+### Non-goals preserved
+
+No semantic extraction agent, PDF/PPT parser, embedding or RAG layer, graph database as canonical state, automatic evidence-strength scoring, automatic novelty judgment, manuscript generation, or autonomous scientific approval was introduced.
+
+## Ready next increment after Phase 3A integration — Phase 3B: repository Claim/Evidence graph registry and audit
+
+**Status:** BLOCKED on Phase 3A integration.
+
+### Objective
+
+Persist Claim, Evidence, and ClaimEvidenceLink records in deterministic repository locations and audit their repository-level graph integrity, provenance resolution, Claim dependencies, Decision governance, and visible supporting/contradicting evidence without performing semantic extraction or automated scientific judgment.
