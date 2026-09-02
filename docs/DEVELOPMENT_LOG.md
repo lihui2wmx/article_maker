@@ -90,9 +90,10 @@ No vector database, semantic RAG, PDF/PPT parser, LLM provider, multi-agent runt
 
 ## 2026-09-02 — Phase 1B: deterministic artifact registration and filesystem validation
 
-**Branch:** `phase/1b-artifact-registration`
+**Branch:** `phase/1b-artifact-registration`  
+**Integration carrier:** PR #3
 
-**Status:** ACTIVE — implementation and bounded-scope audit complete; remote CI/review pending.
+**Status:** COMPLETE — implementation, bounded-scope audit, and PR CI gate passed; integration pending merge.
 
 ### Objective
 
@@ -114,11 +115,11 @@ Connect existing repository files/directories to canonical artifact manifests us
 - recorded durable design choices in `docs/decisions/ADR-0002-artifact-registration.md`;
 - added filesystem-backed tests for source/derived registration, repeat registration, directory registration, media fallback, path and symlink safety, parent resolution, identity conflicts, checksum/missing drift, missing parents, and canonical serialization.
 
-### Scope audit
+### Validation and audit
 
-`main..phase/1b-artifact-registration` is ahead-only. Changes are limited to artifact registration/audit runtime code, shared artifact validators, tests, registration documentation/ADR, and this development-log update.
-
-No parser, embedding model, vector database, RAG layer, LLM provider, agent framework, claim/evidence graph, manuscript generator, or scientific interpretation is introduced.
+- `main..phase/1b-artifact-registration` was audited as ahead-only and limited to artifact registration/audit runtime code, shared validators, tests, docs/ADR, and development state;
+- GitHub Actions run `33617044290` completed successfully on PR #3;
+- checkout, Python setup, dependency installation, the Phase 1A contract suite, and the new filesystem-backed registration tests all passed.
 
 ### Phase 1B exit conditions
 
@@ -132,8 +133,12 @@ No parser, embedding model, vector database, RAG layer, LLM provider, agent fram
 - [x] read-only drift audit exists;
 - [x] material registration choices are documented in ADR-0002;
 - [x] bounded-scope audit passes;
-- [ ] remote CI passes on latest PR head;
-- [ ] Phase 1B integration is merged and `main` CI passes.
+- [x] remote CI passes on PR #3;
+- [ ] PR #3 merged and `main` push CI passes.
+
+### Non-goals preserved
+
+No PDF/PPT semantic parser, embedding model, vector database, RAG layer, LLM provider, agent framework, claim/evidence graph, manuscript generator, or scientific interpretation was introduced.
 
 ### Deferred within artifact ingestion
 
@@ -143,6 +148,16 @@ No parser, embedding model, vector database, RAG layer, LLM provider, agent fram
 - controlled path move/rebind while preserving identity;
 - automatic operational status transitions.
 
-### Next bounded task
+## Ready next increment — Phase 1C: bounded artifact discovery and batch registration
 
-Open the Phase 1B integration PR and validate the complete test suite on GitHub-hosted CI. If green, close and merge Phase 1B. The following increment should define the smallest batch-discovery/registration interface needed to make “drop research material into the repository” convenient without adding semantic parsing or LLM interpretation.
+**Status:** READY after Phase 1B integration.
+
+### Objective
+
+Make the repository-drop workflow convenient by discovering candidate research artifacts under explicit roots and producing a reviewable batch-registration plan, while preserving explicit kind/producer decisions and avoiding semantic parsing.
+
+### Initial boundary
+
+Phase 1C should define deterministic discovery roots, ignore rules, registered/unregistered comparison, and a dry-run registration plan before adding any automatic bulk mutation. A minimal CLI may be added only as a thin interface over tested domain APIs.
+
+It must still avoid content parsing, embeddings, RAG, LLM calls, scientific interpretation, claim/evidence extraction, and agent orchestration.
