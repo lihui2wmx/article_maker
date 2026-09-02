@@ -13,8 +13,8 @@ Detailed historical phase notes remain available in Git history. This compact fo
 
 ## Current repository state — 2026-09-02
 
-**Active phase:** Phase 3B — repository Claim/Evidence registry and graph audit  
-**Status:** IMPLEMENTED — PR #9 initial CI passed; latest-head/integration gates pending  
+**Active next phase:** Phase 4A — typed literature and citation contracts  
+**Status:** READY  
 **Default branch:** `main`
 
 ### Completed milestones
@@ -29,13 +29,18 @@ Detailed historical phase notes remain available in Git history. This compact fo
 | Phase 2A — ResearchQuestion/Hypothesis/Decision contracts | COMPLETE | PR #6 |
 | Phase 2B — repository research-state registry/audit | COMPLETE | PR #7 |
 | Phase 3A — Claim/Evidence governance contracts | COMPLETE | PR #8 |
-| Phase 3B — repository Claim/Evidence registry/audit | INTEGRATION PENDING | PR #9 |
+| Phase 3B — repository Claim/Evidence registry/audit | COMPLETE | PR #9 |
 
 ## Phase 3B — repository Claim/Evidence registry and graph audit
 
 **Branch:** `phase/3b-claim-evidence-registry`  
 **Integration carrier:** PR #9  
-**Initial PR CI:** run `33634840309` — success
+**Integrated main commit:** `32d1773b6e18a85f5a079876f4e474f71b8ea94f`  
+**Initial PR CI:** run `33634840309` — success  
+**Latest-head PR CI:** run `33634933371` — success  
+**Merged-main CI:** run `33634993714` — success
+
+**Status:** COMPLETE.
 
 ### Objective
 
@@ -88,8 +93,12 @@ Human `Decision` records remain authoritative for scientific transitions.
 
 ### Validation and scope audit
 
-- `main..phase/3b-claim-evidence-registry` is ahead-only and limited to registry runtime, exports, tests, documentation/ADR, and this handoff state;
-- initial PR #9 CI run `33634840309` completed successfully, including all existing Phase 1/2/3A tests and the new Phase 3B graph suite;
+- `main..phase/3b-claim-evidence-registry` was ahead-only and limited to registry runtime, exports, tests, documentation/ADR, and canonical handoff state;
+- initial PR #9 CI run `33634840309` completed successfully;
+- latest-head PR CI run `33634933371` completed successfully on `e3154c1bb4ff750c161f5f9cf6fee212cb2adea9`;
+- PR #9 was squash-merged into `main` at `32d1773b6e18a85f5a079876f4e474f71b8ea94f`;
+- merged-main CI run `33634993714` completed successfully;
+- all existing Phase 1/2/3A tests plus the new Phase 3B graph suite passed;
 - no semantic extraction, LLM provider, agent runtime, RAG/vector indexing, graph database as canonical state, confidence scoring, novelty judgment, manuscript generation, or experiment orchestration was introduced.
 
 ### Phase 3B exit conditions
@@ -107,13 +116,12 @@ Human `Decision` records remain authoritative for scientific transitions.
 - [x] approved Claims expose missing accepted support without automatic state mutation;
 - [x] material choices are recorded in ADR-0008;
 - [x] bounded-scope audit passes;
-- [x] initial PR CI passes;
-- [ ] latest-head PR CI passes after this canonical handoff update;
-- [ ] PR #9 merged and `main` push CI passes.
+- [x] initial and latest-head PR CI pass;
+- [x] PR #9 merged and `main` push CI passes.
 
 ## Next bounded increment — Phase 4A: typed literature and citation contracts
 
-**Status:** BLOCKED until Phase 3B integration is complete.
+**Status:** READY after Phase 3B integration.
 
 ### Objective
 
