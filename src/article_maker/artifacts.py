@@ -59,7 +59,7 @@ class Provenance(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     producer: ProducerType
-    parent_artifacts: list[str] = Field(default_factory=list)
+    parent_artifacts: list[str]
     git_revision: str | None = None
     command: str | None = None
     tool: str | None = None
@@ -92,7 +92,7 @@ class ArtifactManifest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal["1.0"]
     artifact_id: str
     kind: ArtifactKind
     stage: ArtifactStage
