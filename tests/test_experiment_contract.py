@@ -129,18 +129,19 @@ def test_dirty_code_requires_diff_artifact_and_clean_code_forbids_it() -> None:
             code_artifact_ids=[],
         )
 
-    schema_payload = code(dirty=True).model_dump(mode="json")
-    schema_payload["working_tree_diff_artifact_id"] = None
+    schema_payload = experiment().model_dump(mode="json")
+    schema_payload["expected_code"] = code(dirty=True).model_dump(mode="json")
+    schema_payload["expected_code"]["working_tree_diff_artifact_id"] = None
     with pytest.raises(SchemaValidationError):
-        Draft202012Validator(SCHEMA["$defs"]["code_provenance"], registry=None).validate(schema_payload)
+        Draft202012Validator(SCHEMA).validate(schema_payload)
 
 
 def test_run_lifecycle_separates_execution_state_from_scientific_quality() -> None:
     run = completed_run()
     assert run.status is ExperimentRunStatus.COMPLETED
-    assert "quality" not in run.model_fields
-    assert "significance" not in run.model_fields
-    assert "supports_hypothesis" not in run.model_fields
+    assert "quality" not in ExperimentRun.model_fields
+    assert "significance" not in ExperimentRun.model_fields
+    assert "supports_hypothesis" not in ExperimentRun.model_fields
 
 
 def test_planned_running_and_terminal_timestamp_rules() -> None:
