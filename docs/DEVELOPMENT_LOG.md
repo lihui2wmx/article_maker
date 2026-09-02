@@ -153,9 +153,10 @@ No PDF/PPT semantic parser, embedding model, vector database, RAG layer, LLM pro
 ## 2026-09-02 — Phase 1C: bounded artifact discovery and dry-run batch planning
 
 **Branch:** `phase/1c-artifact-discovery`  
-**Integration carrier:** PR #4
+**Integration carrier:** PR #4  
+**Integrated main commit:** `ba6e5c17585c787ab68ddd6b951dc51ebef95abf`
 
-**Status:** COMPLETE at implementation/review boundary — bounded-scope audit and PR CI passed; integration pending.
+**Status:** COMPLETE — bounded-scope audit, PR CI, merge, and main push CI all passed.
 
 ### Objective
 
@@ -182,7 +183,9 @@ Make the repository-drop workflow convenient by discovering candidate research f
 ### Validation and audit
 
 - `main..phase/1c-artifact-discovery` was audited as ahead-only and limited to discovery/planning runtime code, exports, tests, docs/ADR, and development state;
-- PR #4 GitHub Actions run `33618851340` completed successfully on head `793163b234f65e933b0d6a394d7991eb58866004`;
+- PR #4 CI runs `33618851340` and `33618942858` completed successfully, including the latest head `a2a6f8cce2d371a9262536bb58f142b02cb9b092`;
+- PR #4 was squash-merged into `main` at `ba6e5c17585c787ab68ddd6b951dc51ebef95abf`;
+- main push CI run `33619011090` completed successfully;
 - checkout, Python setup, dependency installation, existing artifact contract/registration tests, and the new discovery/planning suite all passed.
 
 ### Phase 1C exit conditions
@@ -200,7 +203,7 @@ Make the repository-drop workflow convenient by discovering candidate research f
 - [x] ADR and documentation define the bounded authority model;
 - [x] bounded-scope audit passes;
 - [x] remote PR CI passes;
-- [ ] integration merged and main push CI passes.
+- [x] integration merged and main push CI passes.
 
 ### Non-goals preserved
 
@@ -216,9 +219,9 @@ No content parsing, PDF/PPT extraction, embeddings, RAG, vector database, LLM pr
 - changed-artifact refresh workflow;
 - directory candidate discovery and recursive directory hashing.
 
-## Ready next increment after Phase 1C integration — Phase 1D: reviewed batch-plan execution
+## Ready next increment — Phase 1D: reviewed batch-plan execution
 
-**Status:** BLOCKED on Phase 1C integration.
+**Status:** READY after Phase 1C integration.
 
 ### Objective
 
