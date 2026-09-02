@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:article-maker:schema:research-state:1.0",
+  "title": "Research State Contracts",
+  "description": "Canonical framework-neutral contracts for ResearchQuestion, Hypothesis, and human Decision records.",
+  "oneOf": [
+    {"$ref": "#/$defs/research_question"},
+    {"$ref": "#/$defs/hypothesis"},
+    {"$ref": "#/$defs/decision"}
+  ],
+  "$defs": {
+    "research_question_id": {
+      "type": "string",
+      "pattern": "^rq-[a-z0-9][a-z0-9._-]{2,63}$"
+    },
+    "hypothesis_id": {
+      "type": "string",
+      "pattern": "^hyp-[a-z0-9][a-z0-9._-]{2,63}$"
+    },
+    "decision_id": {
+      "type": "string",
+      "pattern": "^dec-[a-z0-9][a-z0-9._-]{2,63}$"
+    },
+    "artifact_id": {
+      "type": "string",
+      "pattern": "^art-[a-z0-9][a-z0-9._-]{2,63}$"
+    },
+    "artifact_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/artifact_id"}
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "proposal_attribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "actor"],
+      "properties": {
+        "source": {"enum": ["human", "agent"]},
+        "actor": {
+          "type": "string",
+          "pattern": ".*\\S.*"
+        }
+      }
+    },
+    "governed_status": {
+      "enum": ["proposed", "accepted", "rejected", "superseded"]
+    },
+    "research_question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "research_question_id",
+        "question",
+        "status",
+        "proposed_by"
+      ],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "research_question_id": {"$ref": "#/$defs/research_question_id"},
+        "question": {
+          "type": "string",
+          "pattern": ".*\\S.*"
+        },
+        "status": {"$ref": "#/$defs/governed_status"},
+        "proposed_by": {"$ref": "#/$defs/proposal_attribution"},
+        "governing_decision_id": {
+          "oneOf": [
+            {"$ref": "#/$defs/decision_id"},
+            {"type": "null"}
+          ]
+        },
+        "artifact_refs": {"$ref": "#/$defs/artifact_refs"},
+        "metadata": {"$ref": "#/$defs/metadata"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"status": {"const": "proposed"}},
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "governing_decision_id": {"type": "null"}
+            }
+          },
+          "else": {
+            "required": ["governing_decision_id"],
+            "properties": {
+              "governing_decision_id": {"$ref": "#/$defs/decision_id"}
+            }
+          }
+        }
+      ]
+    },
+    "hypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "hypothesis_id",
+        "research_question_id",
+        "statement",
+        "status",
+        "proposed_by"
+      ],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "hypothesis_id": {"$ref": "#/$defs/hypothesis_id"},
+        "research_question_id": {"$ref": "#/$defs/research_question_id"},
+        "statement": {
+          "type": "string",
+          "pattern": ".*\\S.*"
+        },
+        "status": {"$ref": "#/$defs/governed_status"},
+        "proposed_by": {"$ref": "#/$defs/proposal_attribution"},
+        "governing_decision_id": {
+          "oneOf": [
+            {"$ref": "#/$defs/decision_id"},
+            {"type": "null"}
+          ]
+        },
+        "artifact_refs": {"$ref": "#/$defs/artifact_refs"},
+        "metadata": {"$ref": "#/$defs/metadata"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"status": {"const": "proposed"}},
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "governing_decision_id": {"type": "null"}
+            }
+          },
+          "else": {
+            "required": ["governing_decision_id"],
+            "properties": {
+              "governing_decision_id": {"$ref": "#/$defs/decision_id"}
+            }
+          }
+        }
+      ]
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "decision_id",
+        "subject_type",
+        "subject_id",
+        "outcome",
+        "authority",
+        "decided_by",
+        "decided_at",
+        "rationale"
+      ],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "decision_id": {"$ref": "#/$defs/decision_id"},
+        "subject_type": {"enum": ["research_question", "hypothesis"]},
+        "subject_id": {"type": "string"},
+        "outcome": {"enum": ["approve", "reject", "supersede"]},
+        "authority": {"const": "human"},
+        "decided_by": {
+          "type": "string",
+          "pattern": ".*\\S.*"
+        },
+        "decided_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "rationale": {
+          "type": "string",
+          "pattern": ".*\\S.*"
+        },
+        "artifact_refs": {"$ref": "#/$defs/artifact_refs"},
+        "metadata": {"$ref": "#/$defs/metadata"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"subject_type": {"const": "research_question"}},
+            "required": ["subject_type"]
+          },
+          "then": {
+            "properties": {
+              "subject_id": {"$ref": "#/$defs/research_question_id"}
+            }
+          },
+          "else": {
+            "properties": {
+              "subject_id": {"$ref": "#/$defs/hypothesis_id"}
+            }
+          }
+        }
+      ]
+    }
+  }
+}
