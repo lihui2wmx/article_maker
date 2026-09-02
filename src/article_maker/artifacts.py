@@ -51,11 +51,33 @@ class ProducerType(StrEnum):
     AGENT = "agent"
 
 
-def _validate_artifact_id(value: str) -> str:
+def validate_artifact_id(value: str) -> str:
+    """Validate and return one canonical artifact identifier."""
+
     if not _ARTIFACT_ID_RE.fullmatch(value):
         raise ValueError(
             "artifact IDs must match 'art-' followed by 3-64 lowercase slug characters"
         )
+    return value
+
+
+def validate_repository_path(value: str) -> str:
+    """Validate and return one normalized repository-relative POSIX path."""
+
+    if not value or not value.strip():
+        raise ValueError("path must not be blank")
+    if "\\" in value:
+        raise ValueError("path must use POSIX separators")
+    if value.startswith("/") or value.startswith("./"):
+        raise ValueError("path must be repository-relative and normalized")
+    if "//" in value:
+        raise ValueError("path must not contain repeated separators")
+
+    candidate = PurePosixPath(value)
+    if any(part in {".", ".."} for part in candidate.parts):
+        raise ValueError("path must not contain '.' or '..' segments")
+    if str(candidate) != value:
+        raise ValueError("path must be a normalized repository-relative POSIX path")
     return value
 
 
@@ -73,7 +95,7 @@ class Provenance(BaseModel):
     @field_validator("parent_artifacts")
     @classmethod
     def validate_parent_artifacts(cls, values: list[str]) -> list[str]:
-        normalized = [_validate_artifact_id(value) for value in values]
+        normalized = [validate_artifact_id(value) for value in values]
         if len(normalized) != len(set(normalized)):
             raise ValueError("parent_artifacts must not contain duplicates")
         return normalized
@@ -114,27 +136,13 @@ class ArtifactManifest(BaseModel):
 
     @field_validator("artifact_id")
     @classmethod
-    def validate_artifact_id(cls, value: str) -> str:
-        return _validate_artifact_id(value)
+    def validate_artifact_id_field(cls, value: str) -> str:
+        return validate_artifact_id(value)
 
     @field_validator("path")
     @classmethod
-    def validate_repository_path(cls, value: str) -> str:
-        if not value or not value.strip():
-            raise ValueError("path must not be blank")
-        if "\\" in value:
-            raise ValueError("path must use POSIX separators")
-        if value.startswith("/") or value.startswith("./"):
-            raise ValueError("path must be repository-relative and normalized")
-        if "//" in value:
-            raise ValueError("path must not contain repeated separators")
-
-        candidate = PurePosixPath(value)
-        if any(part in {".", ".."} for part in candidate.parts):
-            raise ValueError("path must not contain '.' or '..' segments")
-        if str(candidate) != value:
-            raise ValueError("path must be a normalized repository-relative POSIX path")
-        return value
+    def validate_repository_path_field(cls, value: str) -> str:
+        return validate_repository_path(value)
 
     @field_validator("media_type")
     @classmethod

@@ -88,16 +88,76 @@ Define the smallest canonical representation that can describe heterogeneous rep
 
 No vector database, semantic RAG, PDF/PPT parser, LLM provider, multi-agent runtime, manuscript generator, claim/evidence graph, or automatic scientific interpretation was introduced.
 
-## Ready next increment — Phase 1B: deterministic artifact registration and filesystem validation
+## 2026-09-02 — Phase 1B: deterministic artifact registration and filesystem validation
 
-**Status:** READY after Phase 1A integration.
+**Branch:** `phase/1b-artifact-registration`  
+**Integration carrier:** PR #3
+
+**Status:** COMPLETE — implementation, bounded-scope audit, and PR CI gate passed; integration pending merge.
 
 ### Objective
 
-Register existing repository artifacts deterministically from local paths and validate filesystem-level facts without interpreting scientific content.
+Connect existing repository files/directories to canonical artifact manifests using deterministic filesystem-level registration and read-only drift auditing, without interpreting scientific content.
+
+### Implemented
+
+- added `ArtifactRegistry` with canonical one-manifest-per-artifact storage under `artifacts/manifests/`;
+- added deterministic path-derived IDs when callers do not provide an explicit stable artifact ID;
+- added repository-root containment checks in addition to syntactic path validation, including rejection of symlink escapes;
+- added fixed project-owned media-type inference for common research formats with `application/octet-stream` fallback and `inode/directory` for directories;
+- added streaming SHA-256 calculation for regular files;
+- added parent-manifest resolution for derived artifacts and artifact-ID validation before manifest-path construction;
+- added identity/path collision rules so one path cannot bind to multiple IDs and one ID cannot silently rebind to another path;
+- added canonical UTF-8 JSON serialization with atomic manifest replacement;
+- added read-only registry audit findings for missing parents, unsafe paths, missing present artifacts, missing-status mismatches, and file checksum drift;
+- refactored path/ID validation into shared contract helpers rather than duplicating grammar in the registry;
+- documented registration semantics in `docs/ARTIFACT_REGISTRATION.md`;
+- recorded durable design choices in `docs/decisions/ADR-0002-artifact-registration.md`;
+- added filesystem-backed tests for source/derived registration, repeat registration, directory registration, media fallback, path and symlink safety, parent resolution, identity conflicts, checksum/missing drift, missing parents, and canonical serialization.
+
+### Validation and audit
+
+- `main..phase/1b-artifact-registration` was audited as ahead-only and limited to artifact registration/audit runtime code, shared validators, tests, docs/ADR, and development state;
+- GitHub Actions run `33617044290` completed successfully on PR #3;
+- checkout, Python setup, dependency installation, the Phase 1A contract suite, and the new filesystem-backed registration tests all passed.
+
+### Phase 1B exit conditions
+
+- [x] existing repository files/directories can be registered into `ArtifactManifest` records;
+- [x] regular-file SHA-256 is deterministic and streaming;
+- [x] media-type inference is deterministic across hosts;
+- [x] repository-path containment includes resolved filesystem targets;
+- [x] derived parent references must resolve locally before persistence;
+- [x] registry identity/path ambiguity is rejected;
+- [x] manifest persistence is canonical and atomic;
+- [x] read-only drift audit exists;
+- [x] material registration choices are documented in ADR-0002;
+- [x] bounded-scope audit passes;
+- [x] remote CI passes on PR #3;
+- [ ] PR #3 merged and `main` push CI passes.
+
+### Non-goals preserved
+
+No PDF/PPT semantic parser, embedding model, vector database, RAG layer, LLM provider, agent framework, claim/evidence graph, manuscript generator, or scientific interpretation was introduced.
+
+### Deferred within artifact ingestion
+
+- recursive directory hashing;
+- bulk filesystem discovery/ignore policy;
+- command-line registration UX;
+- controlled path move/rebind while preserving identity;
+- automatic operational status transitions.
+
+## Ready next increment — Phase 1C: bounded artifact discovery and batch registration
+
+**Status:** READY after Phase 1B integration.
+
+### Objective
+
+Make the repository-drop workflow convenient by discovering candidate research artifacts under explicit roots and producing a reviewable batch-registration plan, while preserving explicit kind/producer decisions and avoiding semantic parsing.
 
 ### Initial boundary
 
-Phase 1B may add deterministic path registration, file/directory existence checks, SHA-256 calculation for regular files, media-type inference with conservative fallbacks, manifest serialization/loading, and parent-ID resolution against a local registry.
+Phase 1C should define deterministic discovery roots, ignore rules, registered/unregistered comparison, and a dry-run registration plan before adding any automatic bulk mutation. A minimal CLI may be added only as a thin interface over tested domain APIs.
 
-It must still avoid PDF/PPT semantic parsing, embeddings, RAG, LLM calls, scientific interpretation, claim/evidence extraction, and agent orchestration.
+It must still avoid content parsing, embeddings, RAG, LLM calls, scientific interpretation, claim/evidence extraction, and agent orchestration.
