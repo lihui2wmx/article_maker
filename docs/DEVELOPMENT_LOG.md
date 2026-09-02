@@ -91,9 +91,10 @@ No vector database, semantic RAG, PDF/PPT parser, LLM provider, multi-agent runt
 ## 2026-09-02 — Phase 1B: deterministic artifact registration and filesystem validation
 
 **Branch:** `phase/1b-artifact-registration`  
-**Integration carrier:** PR #3
+**Integration carrier:** PR #3  
+**Integrated main commit:** `13bb43794c12fdf9a844f7e3bf1d1e462dbeac73`
 
-**Status:** COMPLETE — implementation, bounded-scope audit, and PR CI gate passed; integration pending merge.
+**Status:** COMPLETE — implementation, bounded-scope audit, PR CI, merge, and main push CI all passed.
 
 ### Objective
 
@@ -118,8 +119,10 @@ Connect existing repository files/directories to canonical artifact manifests us
 ### Validation and audit
 
 - `main..phase/1b-artifact-registration` was audited as ahead-only and limited to artifact registration/audit runtime code, shared validators, tests, docs/ADR, and development state;
-- GitHub Actions run `33617044290` completed successfully on PR #3;
-- checkout, Python setup, dependency installation, the Phase 1A contract suite, and the new filesystem-backed registration tests all passed.
+- PR CI runs `33617044290` and `33617134618` completed successfully;
+- PR #3 was squash-merged into `main` at `13bb43794c12fdf9a844f7e3bf1d1e462dbeac73`;
+- main push CI run `33617197177` completed successfully;
+- checkout, Python setup, dependency installation, the Phase 1A contract suite, and the filesystem-backed registration suite all passed.
 
 ### Phase 1B exit conditions
 
@@ -134,7 +137,7 @@ Connect existing repository files/directories to canonical artifact manifests us
 - [x] material registration choices are documented in ADR-0002;
 - [x] bounded-scope audit passes;
 - [x] remote CI passes on PR #3;
-- [ ] PR #3 merged and `main` push CI passes.
+- [x] PR #3 merged and `main` push CI passes.
 
 ### Non-goals preserved
 
