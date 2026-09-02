@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .artifacts import ArtifactManifest, ArtifactStatus
-from .discovery import BatchRegistrationPlan, DiscoveryPolicy
+from .discovery import BatchRegistrationPlan, DiscoveryPolicy, PlannedRegistration
 from .registration import (
     ArtifactNotFoundError,
     ArtifactPathError,
@@ -68,6 +68,18 @@ def batch_plan_digest(plan: BatchRegistrationPlan) -> str:
         ensure_ascii=False,
     ).encode("utf-8")
     return hashlib.sha256(serialized).hexdigest()
+
+
+def _snapshot_plan(plan: BatchRegistrationPlan) -> BatchRegistrationPlan:
+    """Deep-copy mutable manifest payloads before execution begins."""
+
+    return BatchRegistrationPlan(
+        roots=tuple(plan.roots),
+        actions=tuple(
+            PlannedRegistration(manifest=action.manifest.model_copy(deep=True))
+            for action in plan.actions
+        ),
+    )
 
 
 class BatchPlanExecutor:
@@ -260,13 +272,14 @@ class BatchPlanExecutor:
     ) -> BatchExecutionResult:
         """Execute the exact reviewed plan or leave no manifests from this batch."""
 
-        current_digest = batch_plan_digest(plan)
-        if approved_plan_digest != current_digest:
+        snapshot = _snapshot_plan(plan)
+        snapshot_digest = batch_plan_digest(snapshot)
+        if approved_plan_digest != snapshot_digest:
             raise BatchApprovalError(
                 "approved plan digest does not match the plan presented for execution"
             )
 
-        preflight_digest = self.preflight(plan)
+        preflight_digest = self.preflight(snapshot)
         if preflight_digest != approved_plan_digest:
             raise BatchApprovalError(
                 "plan changed between approval verification and preflight"
@@ -274,7 +287,7 @@ class BatchPlanExecutor:
 
         created_ids: list[str] = []
         try:
-            for action in plan.actions:
+            for action in snapshot.actions:
                 manifest = action.manifest
 
                 # Re-check immediately before each write. A final post-write audit catches
@@ -284,7 +297,7 @@ class BatchPlanExecutor:
                 self.registry._write_manifest(manifest)  # noqa: SLF001
                 created_ids.append(manifest.artifact_id)
 
-            self._verify_persisted_exact(plan)
+            self._verify_persisted_exact(snapshot)
             self._audit_created(set(created_ids))
         except Exception:
             try:
