@@ -173,7 +173,10 @@ def test_preflight_rejects_path_outside_reviewed_roots(tmp_path: Path) -> None:
         path="other/note.md",
         media_type="text/markdown",
         checksum_sha256=sha256_file(path),
-        provenance=Provenance(producer=ProducerType.HUMAN),
+        provenance=Provenance(
+            producer=ProducerType.HUMAN,
+            parent_artifacts=[],
+        ),
     )
     plan = BatchRegistrationPlan(
         roots=("research",),
@@ -201,7 +204,10 @@ def test_preflight_rejects_same_batch_parent_dependency(tmp_path: Path) -> None:
         path="research/parent.csv",
         media_type="text/csv",
         checksum_sha256=sha256_file(parent_path),
-        provenance=Provenance(producer=ProducerType.HUMAN),
+        provenance=Provenance(
+            producer=ProducerType.HUMAN,
+            parent_artifacts=[],
+        ),
     )
     child = ArtifactManifest(
         schema_version="1.0",
