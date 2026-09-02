@@ -13,8 +13,8 @@ Detailed historical phase notes remain available in Git history. This compact fo
 
 ## Current repository state — 2026-09-02
 
-**Active phase:** Phase 4A — typed literature and citation contracts  
-**Status:** IMPLEMENTED — PR #10 initial CI passed; latest-head/integration gates pending  
+**Active next phase:** Phase 4B — repository literature registry and citation-integrity audit  
+**Status:** READY  
 **Default branch:** `main`
 
 ### Completed milestones
@@ -30,13 +30,18 @@ Detailed historical phase notes remain available in Git history. This compact fo
 | Phase 2B — repository research-state registry/audit | COMPLETE | PR #7 |
 | Phase 3A — Claim/Evidence governance contracts | COMPLETE | PR #8 |
 | Phase 3B — repository Claim/Evidence registry/audit | COMPLETE | PR #9 |
-| Phase 4A — Literature/Citation contracts | INTEGRATION PENDING | PR #10 |
+| Phase 4A — Literature/Citation contracts | COMPLETE | PR #10 |
 
 ## Phase 4A — typed literature and citation contracts
 
 **Branch:** `phase/4a-literature-citation-contracts`  
 **Integration carrier:** PR #10  
-**Initial PR CI:** run `33636442838` — success
+**Integrated main commit:** `987541b1e267e4087e618aa2ed4741bb71e8f1c3`  
+**Initial PR CI:** run `33636442838` — success  
+**Latest-head PR CI:** run `33636568441` — success  
+**Merged-main CI:** run `33636640020` — success
+
+**Status:** COMPLETE.
 
 ### Objective
 
@@ -70,8 +75,12 @@ A later bounded workflow may propose conversion of literature `source_report` re
 
 ### Validation and scope audit
 
-- `main..phase/4a-literature-citation-contracts` is ahead-only and limited to literature contracts, schema, IDs, exports, tests, docs/ADR, and canonical handoff state;
+- `main..phase/4a-literature-citation-contracts` was ahead-only and limited to literature contracts, schema, IDs, exports, tests, docs/ADR, and canonical handoff state;
 - initial PR #10 CI run `33636442838` completed successfully;
+- latest-head PR CI run `33636568441` completed successfully on `aa3e5bd9584b6aedf72d132b776354d0dcf5c5c0`;
+- PR #10 was squash-merged into `main` at `987541b1e267e4087e618aa2ed4741bb71e8f1c3`;
+- merged-main CI run `33636640020` completed successfully;
+- all existing Phase 1–3 tests plus the new Phase 4A literature contract suite passed;
 - no live literature search/download client, PDF/PPT parsing, LLM extraction/summarization, embeddings/RAG, citation recommendation, novelty judgment, manuscript bibliography generation, or venue formatting was introduced.
 
 ### Phase 4A exit conditions
@@ -86,13 +95,12 @@ A later bounded workflow may propose conversion of literature `source_report` re
 - [x] Python and JSON Schema positive/negative tests exist;
 - [x] material choices are recorded in ADR-0009;
 - [x] bounded-scope audit passes;
-- [x] initial PR CI passes;
-- [ ] latest-head PR CI passes after this handoff update;
-- [ ] PR #10 merged and `main` push CI passes.
+- [x] initial and latest-head PR CI pass;
+- [x] PR #10 merged and `main` push CI passes.
 
 ## Next bounded increment — Phase 4B: repository literature registry and citation-integrity audit
 
-**Status:** BLOCKED until Phase 4A integration is complete.
+**Status:** READY after Phase 4A integration.
 
 ### Objective
 
