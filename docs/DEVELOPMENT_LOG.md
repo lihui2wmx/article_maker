@@ -13,8 +13,8 @@ Detailed historical phase notes remain available in Git history. This compact fo
 
 ## Current repository state — 2026-09-02
 
-**Active next phase:** Phase 4B — repository literature registry and citation-integrity audit  
-**Status:** READY  
+**Active phase:** Phase 4B — repository literature registry and citation-integrity audit  
+**Status:** IMPLEMENTED — PR #11 initial CI passed; latest-head/integration gates pending  
 **Default branch:** `main`
 
 ### Completed milestones
@@ -31,110 +31,107 @@ Detailed historical phase notes remain available in Git history. This compact fo
 | Phase 3A — Claim/Evidence governance contracts | COMPLETE | PR #8 |
 | Phase 3B — repository Claim/Evidence registry/audit | COMPLETE | PR #9 |
 | Phase 4A — Literature/Citation contracts | COMPLETE | PR #10 |
+| Phase 4B — literature registry/citation-integrity audit | INTEGRATION PENDING | PR #11 |
 
-## Phase 4A — typed literature and citation contracts
+## Phase 4B — repository literature registry and citation-integrity audit
 
-**Branch:** `phase/4a-literature-citation-contracts`  
-**Integration carrier:** PR #10  
-**Integrated main commit:** `987541b1e267e4087e618aa2ed4741bb71e8f1c3`  
-**Initial PR CI:** run `33636442838` — success  
-**Latest-head PR CI:** run `33636568441` — success  
-**Merged-main CI:** run `33636640020` — success
-
-**Status:** COMPLETE.
+**Branch:** `phase/4b-literature-registry`  
+**Integration carrier:** PR #11  
+**Initial PR CI:** run `33637342522` — success
 
 ### Objective
 
-Define framework-neutral canonical bibliographic and structured literature-reading contracts while separating source metadata, source-reported statements, analyst interpretation, scientific Evidence, and novelty judgments.
+Persist `Citation` and `LiteratureNote` records in deterministic repository locations and audit bibliographic/provenance integrity without automatically merging works, selecting publication versions, promoting notes to Evidence, retrieving papers, or judging novelty.
 
 ### Implemented
 
-- added stable `cit-*` Citation IDs and `litn-*` LiteratureNote IDs;
-- added `Citation` as canonical bibliographic identity plus repository Artifact provenance;
-- kept DOI/arXiv/PMID/ISBN identifiers as external metadata rather than internal primary keys;
-- added work type, title, structured author records, optional ORCID, partial ISO issued dates, container/publisher/volume/issue/pages fields, optional preferred citation key, external identifiers, and JSON metadata;
-- required every Citation to reference at least one canonical Artifact ID;
-- added `LiteratureNote` as a structured human/agent reading record attached to one Citation;
-- added traceable note items with semantic kinds such as method, reported finding, limitation, relevance, and comparison;
-- explicitly distinguished `source_report` from `analyst_interpretation`;
-- required every note item to reference at least one Artifact + nonblank locator;
-- explicitly kept LiteratureNote items separate from canonical `Evidence`, Claim-Evidence links, Claims, and novelty assertions;
-- deliberately omitted novelty scores and novelty-assertion note kinds;
-- added Draft 2020-12 `schemas/literature.schema.json`;
-- added Python/Pydantic implementation in `src/article_maker/literature.py`;
-- exported literature contracts and shared ID validators;
-- documented the contract in `docs/LITERATURE_CONTRACTS.md`;
-- recorded durable identity/interpretation choices in `docs/decisions/ADR-0009-literature-identity-and-interpretation-separation.md`;
-- added positive/negative Python and JSON Schema tests for identity, provenance, authors, dates, duplicate identifiers, source locators, statement-type separation, duplicate notes/tags, JSON metadata, and the novelty boundary.
+- added `LiteratureRegistry` in `src/article_maker/literature_registry.py`;
+- added canonical locations:
+  - `literature/metadata/<citation-id>.json`;
+  - `literature/notes/<literature-note-id>.json`;
+- added typed save/load/list APIs for Citation and LiteratureNote records;
+- added deterministic UTF-8 JSON serialization with per-record atomic replacement;
+- added malformed-record-tolerant read-only audit;
+- resolved Citation -> Artifact provenance references through the Phase 1 ArtifactRegistry;
+- resolved LiteratureNote -> Citation references;
+- resolved every note-item source Artifact;
+- required note-item source Artifacts to belong to the referenced Citation provenance set;
+- audited filename/ID mismatches and duplicate internal IDs;
+- classified duplicate case-insensitive `preferred_key` values as structural errors;
+- classified repeated external identifiers across Citations as warnings/review signals only;
+- classified same normalized title + issued-year groups as possible-duplicate-work warnings only;
+- deliberately retained all Citation records when duplicate-work warnings are present;
+- documented registry/audit semantics in `docs/LITERATURE_REGISTRY.md`;
+- recorded durable duplicate-signal choices in `docs/decisions/ADR-0010-literature-registry-and-duplicate-signals.md`;
+- exported the literature registry API from `article_maker`;
+- added filesystem-backed tests for clean persistence/audit, missing Artifact/Citation references, provenance-subset enforcement, preferred-key collisions, external-identifier warnings, title/year duplicate warnings, malformed-record tolerance, filename/ID mismatch, duplicate IDs, unsafe registry paths, and missing loads.
 
-### Authority and interpretation boundary
+### Authority boundary
 
-Phase 4A permits agents to record traceable literature notes, including analyst interpretations. Such notes are not automatically scientific Evidence and do not automatically establish support, contradiction, or novelty.
+Phase 4B audit is read-only. Duplicate-work signals do not prove bibliographic equivalence and therefore cannot mutate canonical Citation identity.
 
-A later bounded workflow may propose conversion of literature `source_report` records into literature-derived Evidence, but existing human-governed scientific transitions remain authoritative.
+The audit must not:
+
+- merge or delete Citation records;
+- select a preferred publication/preprint version;
+- rewrite external identifiers;
+- promote LiteratureNote items to Evidence;
+- create ClaimEvidenceLink records;
+- assert novelty;
+- fetch or semantically parse literature.
 
 ### Validation and scope audit
 
-- `main..phase/4a-literature-citation-contracts` was ahead-only and limited to literature contracts, schema, IDs, exports, tests, docs/ADR, and canonical handoff state;
-- initial PR #10 CI run `33636442838` completed successfully;
-- latest-head PR CI run `33636568441` completed successfully on `aa3e5bd9584b6aedf72d132b776354d0dcf5c5c0`;
-- PR #10 was squash-merged into `main` at `987541b1e267e4087e618aa2ed4741bb71e8f1c3`;
-- merged-main CI run `33636640020` completed successfully;
-- all existing Phase 1–3 tests plus the new Phase 4A literature contract suite passed;
-- no live literature search/download client, PDF/PPT parsing, LLM extraction/summarization, embeddings/RAG, citation recommendation, novelty judgment, manuscript bibliography generation, or venue formatting was introduced.
+- `main..phase/4b-literature-registry` is ahead-only and limited to registry runtime, exports, tests, documentation/ADR, and this handoff state;
+- initial PR #11 CI run `33637342522` completed successfully, including all existing Phase 1–4A tests and the new Phase 4B suite;
+- no live literature search/download client, semantic parser, LLM extraction/summarization, embeddings/RAG, automatic record merge, automatic note-to-Evidence promotion, novelty judgment, manuscript generation, or venue formatting was introduced.
 
-### Phase 4A exit conditions
+### Phase 4B exit conditions
 
-- [x] framework-neutral Citation contract exists;
-- [x] framework-neutral LiteratureNote contract exists;
-- [x] internal Citation identity is independent from external identifier namespaces;
-- [x] Citation repository provenance is explicit;
-- [x] source-reported literature content is distinct from analyst interpretation;
-- [x] every structured note item has precise repository provenance;
-- [x] literature notes do not automatically become Evidence or novelty claims;
-- [x] Python and JSON Schema positive/negative tests exist;
-- [x] material choices are recorded in ADR-0009;
+- [x] deterministic Citation/Note canonical locations exist;
+- [x] typed save/load/list APIs exist;
+- [x] malformed-record-tolerant read-only audit exists;
+- [x] Citation -> Artifact provenance is audited;
+- [x] LiteratureNote -> Citation is audited;
+- [x] note Artifact existence and Citation-provenance membership are audited;
+- [x] preferred-key collisions are structural errors;
+- [x] external-identifier and title/year duplicate-work signals are warnings only;
+- [x] duplicate signals never auto-merge canonical records;
+- [x] filename/ID mismatch and duplicate internal IDs are audited;
+- [x] material choices are recorded in ADR-0010;
 - [x] bounded-scope audit passes;
-- [x] initial and latest-head PR CI pass;
-- [x] PR #10 merged and `main` push CI passes.
+- [x] initial PR CI passes;
+- [ ] latest-head PR CI passes after this canonical handoff update;
+- [ ] PR #11 merged and `main` push CI passes.
 
-## Next bounded increment — Phase 4B: repository literature registry and citation-integrity audit
+## Next bounded increment — Phase 4C: reviewed literature-to-Evidence proposal bridge
 
-**Status:** READY after Phase 4A integration.
+**Status:** BLOCKED until Phase 4B integration is complete.
 
 ### Objective
 
-Persist Citation and LiteratureNote records in deterministic repository locations and audit cross-record provenance/identity integrity without automatically merging works, promoting notes to Evidence, retrieving papers, or judging novelty.
+Create a deterministic, reviewable bridge that can transform eligible `LiteratureNote` `source_report` items into proposed `Evidence(kind=literature_statement)` objects without writing Evidence automatically or interpreting analyst notes as source facts.
 
-### Expected canonical locations
+### Required boundary
 
-```text
-literature/metadata/<citation-id>.json
-literature/notes/<literature-note-id>.json
-```
+At minimum Phase 4C should:
 
-### Required audit boundary
-
-At minimum Phase 4B should check:
-
-- Citation -> Artifact existence;
-- LiteratureNote -> Citation existence;
-- LiteratureNote source Artifact existence;
-- LiteratureNote source Artifact belongs to the referenced Citation provenance set;
-- duplicate preferred citation keys;
-- repeated external identifier values across distinct Citations;
-- filename/ID mismatch and duplicate IDs;
-- malformed-record tolerance;
-- duplicate-work signals are warnings/review tasks, not automatic record merges.
+- accept only `source_report` note items as eligible source material;
+- preserve exact Artifact + locator provenance;
+- preserve Citation and LiteratureNote identifiers in proposal metadata;
+- produce deterministic dry-run Evidence previews;
+- reject analyst interpretations as direct literature Evidence inputs;
+- detect stale literature records before execution or persistence;
+- require an explicit reviewed execution step before canonical Evidence write.
 
 ### Non-goals
 
-Do not introduce in Phase 4B:
+Do not introduce in Phase 4C:
 
 - live literature search/download clients;
 - PDF/PPT semantic parsing;
 - LLM summarization/extraction;
 - embeddings/vector retrieval;
-- automatic note-to-Evidence promotion;
+- automatic ClaimEvidenceLink creation or acceptance;
 - automatic novelty assertions;
 - manuscript generation or venue-specific formatting.
