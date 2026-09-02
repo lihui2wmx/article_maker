@@ -7,8 +7,22 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Iterable
 
-from .artifacts import ArtifactKind, ArtifactStage, ProducerType, validate_repository_path
-from .registration import ArtifactPathError, ArtifactRegistry, infer_media_type, sha256_file
+from .artifacts import (
+    ArtifactKind,
+    ArtifactManifest,
+    ArtifactStage,
+    ArtifactStatus,
+    ProducerType,
+    Provenance,
+    validate_repository_path,
+)
+from .registration import (
+    ArtifactNotFoundError,
+    ArtifactRegistry,
+    generated_artifact_id,
+    infer_media_type,
+    sha256_file,
+)
 
 _DEFAULT_IGNORED_DIRECTORY_NAMES = (
     ".git",
@@ -105,10 +119,9 @@ class RegistrationSelection:
 
 @dataclass(frozen=True, slots=True)
 class PlannedRegistration:
-    path: str
-    media_type: str
-    checksum_sha256: str
-    selection: RegistrationSelection
+    """Exact manifest preview for one future registration write."""
+
+    manifest: ArtifactManifest
 
 
 @dataclass(frozen=True, slots=True)
@@ -212,13 +225,11 @@ class ArtifactDiscoverer:
                 artifact_id = None
             else:
                 artifact_id = manifest.artifact_id
-                if (
-                    manifest.checksum_sha256 != checksum
-                    or manifest.media_type != media_type
-                ):
-                    state = DiscoveryState.CHANGED
-                else:
-                    state = DiscoveryState.REGISTERED
+                state = (
+                    DiscoveryState.CHANGED
+                    if manifest.checksum_sha256 != checksum or manifest.media_type != media_type
+                    else DiscoveryState.REGISTERED
+                )
 
             results.append(
                 DiscoveredArtifact(
@@ -232,12 +243,35 @@ class ArtifactDiscoverer:
 
         return results
 
+    def _require_registered_parent(self, parent_id: str) -> None:
+        try:
+            self.registry.load(parent_id)
+        except (ArtifactNotFoundError, ValueError) as exc:
+            raise RegistrationPlanError(
+                f"selected parent artifact is not registered: {parent_id}"
+            ) from exc
+
+    def _require_available_artifact_id(self, artifact_id: str, repository_path: str) -> None:
+        try:
+            existing = self.registry.load(artifact_id)
+        except ArtifactNotFoundError:
+            return
+        except ValueError as exc:
+            raise RegistrationPlanError(f"invalid artifact_id in selection: {artifact_id}") from exc
+
+        if existing.path != repository_path:
+            raise RegistrationPlanError(
+                f"artifact_id {artifact_id} is already bound to path {existing.path}"
+            )
+        raise RegistrationPlanError(f"selected path is already registered: {repository_path}")
+
     def plan(self, selections: Iterable[RegistrationSelection]) -> BatchRegistrationPlan:
-        """Build a no-write plan for explicitly selected unregistered discovered files."""
+        """Build exact validated manifest previews for selected unregistered files."""
 
         discovered = {candidate.path: candidate for candidate in self.discover()}
         actions: list[PlannedRegistration] = []
         seen_paths: set[str] = set()
+        seen_ids: set[str] = set()
 
         for selection in selections:
             if selection.path in seen_paths:
@@ -260,27 +294,43 @@ class ArtifactDiscoverer:
                     f"selected path has registered filesystem drift and requires explicit review: {selection.path}"
                 )
 
+            artifact_id = selection.artifact_id or generated_artifact_id(selection.path)
+            if artifact_id in seen_ids:
+                raise RegistrationPlanError(f"planned artifact_id is duplicated: {artifact_id}")
+            seen_ids.add(artifact_id)
+            self._require_available_artifact_id(artifact_id, selection.path)
+
             for parent_id in selection.parent_artifacts:
-                try:
-                    self.registry.load(parent_id)
-                except (ArtifactPathError, Exception) as exc:
-                    # ArtifactRegistry.load performs canonical artifact-ID validation before path access.
-                    from .registration import ArtifactNotFoundError
+                self._require_registered_parent(parent_id)
 
-                    if isinstance(exc, ArtifactNotFoundError) or isinstance(exc, ValueError):
-                        raise RegistrationPlanError(
-                            f"selected parent artifact is not registered: {parent_id}"
-                        ) from exc
-                    raise
-
-            actions.append(
-                PlannedRegistration(
-                    path=candidate.path,
+            try:
+                manifest = ArtifactManifest(
+                    schema_version="1.0",
+                    artifact_id=artifact_id,
+                    kind=selection.kind,
+                    stage=selection.stage,
+                    status=ArtifactStatus.PRESENT,
+                    path=selection.path,
                     media_type=candidate.media_type,
+                    title=selection.title,
+                    description=selection.description,
                     checksum_sha256=candidate.checksum_sha256,
-                    selection=selection,
+                    tags=list(selection.tags),
+                    provenance=Provenance(
+                        producer=selection.producer,
+                        parent_artifacts=list(selection.parent_artifacts),
+                        git_revision=selection.git_revision,
+                        command=selection.command,
+                        tool=selection.tool,
+                    ),
+                    metadata=dict(selection.metadata),
                 )
-            )
+            except ValueError as exc:
+                raise RegistrationPlanError(
+                    f"selection does not form a valid artifact manifest: {selection.path}"
+                ) from exc
 
-        actions.sort(key=lambda action: action.path)
+            actions.append(PlannedRegistration(manifest=manifest))
+
+        actions.sort(key=lambda action: action.manifest.path)
         return BatchRegistrationPlan(roots=self.policy.roots, actions=tuple(actions))
