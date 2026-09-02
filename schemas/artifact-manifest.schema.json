@@ -10,6 +10,7 @@
     "artifact_id",
     "kind",
     "stage",
+    "status",
     "path",
     "media_type",
     "provenance"
@@ -42,10 +43,14 @@
     "stage": {
       "enum": ["source", "derived"]
     },
+    "status": {
+      "description": "Operational availability/lifecycle state only; never scientific approval.",
+      "enum": ["present", "missing", "superseded"]
+    },
     "path": {
       "type": "string",
       "minLength": 1,
-      "pattern": "^(?!/)(?!\\./)(?!.*//$)(?!.*//)(?!.*\\\\)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\/$).+$"
+      "pattern": "^(?!/)(?!\\./)(?!.*//)(?!.*\\\\)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\/$).+$"
     },
     "media_type": {
       "type": "string",
