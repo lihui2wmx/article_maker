@@ -24,9 +24,12 @@ def _discoverer(tmp_path: Path, roots: tuple[str, ...] = ("research",)) -> Artif
     return ArtifactDiscoverer(ArtifactRegistry(tmp_path), DiscoveryPolicy(roots=roots))
 
 
-def test_policy_requires_explicit_unique_roots() -> None:
+def test_policy_requires_bounded_explicit_unique_roots() -> None:
     with pytest.raises(DiscoveryRootError, match="at least one explicit root"):
         DiscoveryPolicy(roots=())
+
+    with pytest.raises(DiscoveryRootError, match="unbounded discovery root"):
+        DiscoveryPolicy(roots=(".",))
 
     with pytest.raises(DiscoveryRootError, match="must not contain duplicates"):
         DiscoveryPolicy(roots=("notes", "notes"))
@@ -115,7 +118,7 @@ def test_discovery_rejects_missing_root(tmp_path: Path) -> None:
         discoverer.discover()
 
 
-def test_discovery_rejects_root_symlink_escape(tmp_path: Path) -> None:
+def test_discovery_rejects_symlink_root(tmp_path: Path) -> None:
     outside = tmp_path.parent / f"{tmp_path.name}-outside"
     outside.mkdir(exist_ok=True)
     (outside / "paper.pdf").write_bytes(b"pdf")
@@ -125,7 +128,7 @@ def test_discovery_rejects_root_symlink_escape(tmp_path: Path) -> None:
     except OSError:
         pytest.skip("symlinks are not available on this platform")
 
-    with pytest.raises(DiscoveryRootError, match="outside repository_root"):
+    with pytest.raises(DiscoveryRootError, match="must not be a symlink"):
         _discoverer(tmp_path).discover()
 
 
