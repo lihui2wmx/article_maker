@@ -13,8 +13,8 @@ Detailed historical phase notes remain available in Git history. This compact fo
 
 ## Current repository state — 2026-09-03
 
-**Active phase:** Phase 5A — typed Experiment provenance contracts  
-**Status:** IMPLEMENTED — PR #13 initial CI passed; latest-head/integration gates pending  
+**Active next phase:** Phase 5B — repository Experiment registry and provenance audit  
+**Status:** READY  
 **Default branch:** `main`
 
 ### Completed milestones
@@ -33,80 +33,41 @@ Detailed historical phase notes remain available in Git history. This compact fo
 | Phase 4A — Literature/Citation contracts | COMPLETE | PR #10 |
 | Phase 4B — literature registry/citation-integrity audit | COMPLETE | PR #11 |
 | Phase 4C — reviewed literature-to-Evidence bridge | COMPLETE | PR #12 |
-| Phase 5A — typed Experiment provenance contracts | INTEGRATION PENDING | PR #13 |
+| Phase 5A — typed Experiment provenance contracts | COMPLETE | PR #13 |
 
-## Phase 5A — typed Experiment provenance contracts
+## Phase 5A closure
 
 **Branch:** `phase/5a-experiment-provenance-contracts`  
 **Integration carrier:** PR #13  
-**Initial PR CI:** run `33657449413` — success
+**Initial PR CI:** `33657449413` — success  
+**Latest-head PR CI:** `33657556912` — success  
+**Integrated main commit:** `e2b5db9aed662a03fa859d3531b1d98bbd1d0c0c`  
+**Merged-main CI:** `33657647760` — success
 
-### Objective
+Phase 5A added framework-neutral `Experiment` and `ExperimentRun` contracts with:
 
-Define framework-neutral canonical contracts for reproducible Experiment intent and individual ExperimentRun execution provenance without implementing experiment scheduling/execution or interpreting experimental results scientifically.
+- stable `exp-*` and `exprun-*` identities;
+- separation of intended Experiment specification from observed run provenance;
+- deterministic `experiment_spec_digest()` binding runs to exact intended specifications;
+- explicit input/config/code/environment/output Artifact references;
+- Git revision and dirty-working-tree provenance, including required diff Artifact for dirty code;
+- JSON-only intended/resolved parameter state;
+- operational run states `planned`, `running`, `completed`, `failed`, `cancelled`, and `partial`;
+- timezone-aware lifecycle timestamps and explicit termination provenance for incomplete terminal runs;
+- `rerun` / `reproduction` lineage that records execution intent without asserting scientific reproduction success;
+- Draft 2020-12 schema and Python/Pydantic validation;
+- positive/negative contract tests and ADR-0012.
 
-### Implemented
+A completed run remains an execution fact only. Phase 5A does not infer correctness, statistical significance, reproducibility success, Hypothesis support, Evidence, Claim status, or manuscript readiness.
 
-- added stable `exp-*` Experiment IDs and `exprun-*` ExperimentRun IDs;
-- added `Experiment` as intended protocol/specification state with title, objective, proposer, input/config Artifact references, JSON parameters, expected code provenance, expected execution environment, and JSON metadata;
-- added deterministic `experiment_spec_digest()` over canonical JSON serialization of the complete validated Experiment specification;
-- added `ExperimentRun` as one observed execution with the referenced Experiment ID/spec digest, operational lifecycle, timezone-aware timestamps, executor attribution, actual input/config Artifacts, resolved parameters, observed code/environment, output Artifacts, optional termination details, optional lineage, and JSON metadata;
-- added `CodeProvenance` with required Git revision and explicit dirty-working-tree semantics;
-- required `working_tree_diff_artifact_id` when `dirty=true` and forbade a diff Artifact when `dirty=false`;
-- added `ExecutionEnvironment` with runtime, optional OS/architecture/container identity, environment Artifacts, and JSON metadata;
-- added `RunTermination` for failed/cancelled/partial executions, including reason/stage/diagnostic Artifacts;
-- added `RunLineage` relations `rerun` and `reproduction`, explicitly representing execution intent rather than successful scientific reproduction;
-- enforced lifecycle invariants for planned/running/completed/failed/cancelled/partial runs;
-- required timezone-aware timestamps and forbade `finished_at < started_at`;
-- deliberately omitted scientific quality, significance, hypothesis-support, Evidence, and Claim fields from ExperimentRun;
-- added Draft 2020-12 `schemas/experiment.schema.json`;
-- added Python/Pydantic implementation in `src/article_maker/experiment.py` and exported the public contract API;
-- documented contract semantics in `docs/EXPERIMENT_CONTRACTS.md`;
-- recorded durable identity/provenance/lifecycle choices in `docs/decisions/ADR-0012-experiment-run-provenance-and-lifecycle.md`;
-- added positive/negative tests for Python and JSON Schema contracts, deterministic spec digests, dirty-code provenance, lifecycle timestamps, partial/failure termination, lineage self-reference, duplicate Artifact refs, JSON-only configuration, and invalid identities/revisions/digests.
+Documentation:
 
-### Scientific authority boundary
-
-Phase 5A records experiment intent and execution facts only.
-
-A run with `status=completed` does **not** mean that:
-
-- the result is correct;
-- the result is statistically significant;
-- the run reproduced a prior result successfully;
-- a Hypothesis is supported or contradicted;
-- an Evidence or Claim record should be created;
-- the result is manuscript-ready.
-
-Those transitions remain separate, reviewable scientific workflows.
-
-### Validation and scope audit
-
-- `main..phase/5a-experiment-provenance-contracts` is ahead-only and limited to Experiment contracts, shared IDs, exports, schema, tests, documentation/ADR, and this handoff state;
-- initial PR #13 CI run `33657449413` completed successfully, including all existing Phase 1–4C tests and the new Phase 5A suite;
-- no Experiment registry, scheduler, remote/cloud/HPC runner, container orchestration, parameter-sweep executor, statistical interpretation, reproducibility scoring, automatic Evidence/Claim creation, LLM/agent runtime, or manuscript generation was introduced.
-
-### Phase 5A exit conditions
-
-- [x] Experiment and ExperimentRun identities exist;
-- [x] intended Experiment and observed ExperimentRun are separate contracts;
-- [x] exact Experiment specification digest exists;
-- [x] input/config/code/environment/output provenance is explicit;
-- [x] dirty code requires preserved diff provenance;
-- [x] parameters/configuration are JSON-only canonical state;
-- [x] operational lifecycle and failure/partial representation exist;
-- [x] rerun/reproduction lineage is explicit and non-scientific;
-- [x] Draft 2020-12 and Python contracts exist;
-- [x] positive/negative tests exist;
-- [x] ADR-0012 records material decisions;
-- [x] bounded-scope audit passes;
-- [x] initial PR CI passes;
-- [ ] latest-head PR CI passes after this handoff update;
-- [ ] PR #13 merged and `main` push CI passes.
+- `docs/EXPERIMENT_CONTRACTS.md`
+- `docs/decisions/ADR-0012-experiment-run-provenance-and-lifecycle.md`
 
 ## Next bounded increment — Phase 5B: repository Experiment registry and provenance audit
 
-**Status:** BLOCKED until Phase 5A integration is complete.
+**Status:** READY after Phase 5A integration.
 
 ### Objective
 
