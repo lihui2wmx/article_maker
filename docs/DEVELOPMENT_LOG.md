@@ -219,12 +219,71 @@ No content parsing, PDF/PPT extraction, embeddings, RAG, vector database, LLM pr
 - changed-artifact refresh workflow;
 - directory candidate discovery and recursive directory hashing.
 
-## Ready next increment — Phase 1D: reviewed batch-plan execution
+## 2026-09-02 — Phase 1D: reviewed batch-plan execution
 
-**Status:** READY after Phase 1C integration.
+**Branch:** `phase/1d-batch-execution`  
+**Integration carrier:** PR #5
+
+**Status:** COMPLETE at implementation/review boundary — bounded-scope audit and latest-head PR CI passed; integration pending.
 
 ### Objective
 
-Execute an already-reviewed `BatchRegistrationPlan` safely while verifying that filesystem facts have not changed since planning and defining explicit failure/rollback semantics.
+Execute an exact reviewed `BatchRegistrationPlan` without silently accepting post-review mutations or stale filesystem facts, and avoid intentional partial manifest batches on normal in-process failure.
 
-The execution layer must remain a mechanical ingestion capability and must not introduce semantic parsing or scientific interpretation.
+### Implemented
+
+- added deterministic versioned `batch_plan_digest()` covering reviewed roots and every planned manifest field;
+- added `BatchPlanExecutor` requiring the approved digest before mutation;
+- deep-snapshotted mutable manifest payloads at execution start so in-process mutation of the caller's plan cannot change the executed state;
+- added full-batch no-write preflight before the first manifest write;
+- rejected paths outside reviewed roots, duplicate paths/IDs, post-review identity conflicts, missing parents, non-present artifacts, non-regular files, symlink-component drift, missing paths, media-type drift, and SHA-256 drift;
+- explicitly rejected same-batch parent dependencies to keep execution order-independent in this phase;
+- rechecked identity and filesystem facts immediately before each write;
+- persisted the exact reviewed manifest objects rather than regenerating replacement manifests from new filesystem facts;
+- rolled back manifests already created by the batch when a later write or verification failed;
+- added explicit rollback failure reporting;
+- reloaded all new manifests and required exact equality with the reviewed snapshot;
+- ran registry audit findings scoped to newly created IDs and rolled back on immediate verification failure;
+- documented the execution contract in `docs/BATCH_EXECUTION.md`;
+- recorded durable transaction/review decisions in `docs/decisions/ADR-0004-reviewed-batch-execution.md`;
+- added tests for digest stability, successful execution, post-review plan mutation, stale file rejection, post-review ID conflict, mid-batch rollback, reviewed-root containment, and same-batch lineage rejection.
+
+### Validation and audit
+
+- `main..phase/1d-batch-execution` was audited as ahead-only and limited to execution runtime code, package exports, tests, execution documentation/ADR, and development state;
+- PR #5 CI run `33620903831` completed successfully on head `a4a63fa5e68270688009e611a88d278e7226e6bb`;
+- existing Phase 1 artifact contract/registration/discovery suites and the new batch-execution suite passed.
+
+### Phase 1D exit conditions
+
+- [x] reviewed plan is bound to a deterministic digest;
+- [x] execution uses a deep snapshot of the approved plan;
+- [x] full-batch preflight occurs before mutation;
+- [x] stale filesystem facts are rejected rather than refreshed;
+- [x] identity conflicts introduced after review are rejected;
+- [x] same-batch lineage policy is explicit;
+- [x] normal in-process write/verification failure rolls back created manifests;
+- [x] exact post-write reload verification exists;
+- [x] immediate audit is scoped to newly created artifacts;
+- [x] material execution decisions are documented in ADR-0004;
+- [x] bounded-scope audit passes;
+- [x] latest-head PR CI passes;
+- [ ] PR #5 merged and main push CI passes.
+
+### Transaction boundary
+
+Phase 1D provides in-process all-or-nothing behavior for manifests newly created by the batch. It does not claim crash-safe multi-file transactions, cross-process writer exclusion, or authenticated reviewer identity.
+
+### Non-goals preserved
+
+No content parsing, PDF/PPT extraction, embeddings, RAG, vector database, LLM provider, agent runtime, claim/evidence graph, manuscript generator, changed-artifact refresh, path move/rebind, CLI approval flow, transaction journal, or cross-process lock was introduced.
+
+## Ready next increment after Phase 1D integration — Phase 2A: research-state contracts
+
+**Status:** BLOCKED on Phase 1D integration.
+
+### Objective
+
+Begin Phase 2 by defining framework-neutral, human-auditable contracts for `ResearchQuestion`, `Hypothesis`, and `Decision`, including explicit lifecycle/approval semantics and artifact references without yet implementing claims/evidence, LLM extraction, or agent orchestration.
+
+Phase 2A must preserve the existing human authority gates: agents may propose research questions and hypotheses, but canonical acceptance of research direction requires explicit human approval.
