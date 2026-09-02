@@ -49,6 +49,11 @@ _EXPECTED_STATUS: dict[DecisionOutcome, ResearchStateStatus] = {
     DecisionOutcome.SUPERSEDE: ResearchStateStatus.SUPERSEDED,
 }
 
+_PHASE2_SUBJECT_TYPES = {
+    DecisionSubjectType.RESEARCH_QUESTION,
+    DecisionSubjectType.HYPOTHESIS,
+}
+
 
 class ResearchStateRegistry:
     """Persist and audit repository-level ResearchQuestion/Hypothesis/Decision state."""
@@ -261,7 +266,7 @@ class ResearchStateRegistry:
         return decision.subject_type, decision.subject_id
 
     def audit(self) -> list[ResearchStateAuditFinding]:
-        """Resolve repository-level references and report graph-integrity violations."""
+        """Resolve Phase 2 references and report repository graph-integrity violations."""
 
         questions, findings = self._audit_collection(self.questions_dir, ResearchQuestion)
         hypotheses, hypothesis_findings = self._audit_collection(
@@ -296,8 +301,11 @@ class ResearchStateRegistry:
             )
             if decision.subject_type is DecisionSubjectType.RESEARCH_QUESTION:
                 subject_exists = decision.subject_id in questions
-            else:
+            elif decision.subject_type is DecisionSubjectType.HYPOTHESIS:
                 subject_exists = decision.subject_id in hypotheses
+            else:
+                # Phase 3+ subject resolution belongs to the registry for that domain.
+                continue
             if not subject_exists:
                 findings.append(
                     ResearchStateAuditFinding(
@@ -320,7 +328,8 @@ class ResearchStateRegistry:
 
         decisions_by_subject: dict[tuple[DecisionSubjectType, str], list[Decision]] = defaultdict(list)
         for decision in decisions.values():
-            decisions_by_subject[self._subject_key(decision)].append(decision)
+            if decision.subject_type in _PHASE2_SUBJECT_TYPES:
+                decisions_by_subject[self._subject_key(decision)].append(decision)
 
         for subject_key, subject in governed.items():
             subject_id = subject_key[1]
