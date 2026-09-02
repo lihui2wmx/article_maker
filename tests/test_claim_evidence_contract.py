@@ -22,6 +22,7 @@ from article_maker import (
     ProposalAttribution,
     ProposalSource,
     RelationStatus,
+    ResearchStateRegistry,
 )
 
 SCHEMA = json.loads(
@@ -122,6 +123,27 @@ def test_human_decisions_can_govern_claims_and_claim_evidence_links() -> None:
     validator = Draft202012Validator(RESEARCH_SCHEMA, format_checker=FormatChecker())
     validator.validate(claim_decision.model_dump(mode="json"))
     validator.validate(link_decision.model_dump(mode="json"))
+
+
+def test_phase2_registry_does_not_misclassify_phase3_decision_subjects(tmp_path: Path) -> None:
+    registry = ResearchStateRegistry(tmp_path)
+    registry.save_decision(
+        Decision(
+            schema_version="1.0",
+            decision_id="dec-claim-approval",
+            subject_type=DecisionSubjectType.CLAIM,
+            subject_id="clm-interface-robustness",
+            outcome=DecisionOutcome.APPROVE,
+            authority="human",
+            decided_by="principal-investigator",
+            decided_at=datetime(2026, 9, 2, 12, 0, tzinfo=timezone.utc),
+            rationale="Phase 3 subject resolution belongs to the Phase 3 registry.",
+        )
+    )
+
+    assert not any(
+        finding.code == "missing-decision-subject" for finding in registry.audit()
+    )
 
 
 def test_approved_claim_requires_governing_decision() -> None:
