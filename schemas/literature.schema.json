@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:article-maker:schema:literature:1.0",
+  "title": "Literature and Citation Contracts",
+  "description": "Canonical framework-neutral contracts for bibliographic identity/provenance and structured, traceable literature notes.",
+  "oneOf": [
+    {"$ref": "#/$defs/citation"},
+    {"$ref": "#/$defs/literature_note"}
+  ],
+  "$defs": {
+    "artifact_id": {"type": "string", "pattern": "^art-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "citation_id": {"type": "string", "pattern": "^cit-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "literature_note_id": {"type": "string", "pattern": "^litn-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "nonblank": {"type": "string", "pattern": ".*\\S.*"},
+    "metadata": {"type": "object"},
+    "proposal_attribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "actor"],
+      "properties": {
+        "source": {"enum": ["human", "agent"]},
+        "actor": {"$ref": "#/$defs/nonblank"}
+      }
+    },
+    "author": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {"$ref": "#/$defs/nonblank"},
+        "orcid": {
+          "oneOf": [
+            {"type": "string", "pattern": "^\\d{4}-\\d{4}-\\d{4}-[\\dX]{4}$"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "identifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scheme", "value"],
+      "properties": {
+        "scheme": {"enum": ["doi", "arxiv", "pmid", "isbn", "other"]},
+        "value": {"$ref": "#/$defs/nonblank"}
+      }
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "locator"],
+      "properties": {
+        "artifact_id": {"$ref": "#/$defs/artifact_id"},
+        "locator": {"$ref": "#/$defs/nonblank"}
+      }
+    },
+    "citation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "citation_id",
+        "work_type",
+        "title",
+        "authors",
+        "source_artifact_ids"
+      ],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "citation_id": {"$ref": "#/$defs/citation_id"},
+        "work_type": {
+          "enum": [
+            "journal_article",
+            "conference_paper",
+            "preprint",
+            "book",
+            "book_chapter",
+            "thesis",
+            "report",
+            "dataset",
+            "software",
+            "other"
+          ]
+        },
+        "title": {"$ref": "#/$defs/nonblank"},
+        "authors": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/author"}
+        },
+        "issued": {
+          "oneOf": [
+            {"type": "string", "pattern": "^\\d{4}(?:-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12]\\d|3[01]))?)?$"},
+            {"type": "null"}
+          ]
+        },
+        "container_title": {"oneOf": [{"$ref": "#/$defs/nonblank"}, {"type": "null"}]},
+        "publisher": {"oneOf": [{"$ref": "#/$defs/nonblank"}, {"type": "null"}]},
+        "volume": {"oneOf": [{"$ref": "#/$defs/nonblank"}, {"type": "null"}]},
+        "issue": {"oneOf": [{"$ref": "#/$defs/nonblank"}, {"type": "null"}]},
+        "pages": {"oneOf": [{"$ref": "#/$defs/nonblank"}, {"type": "null"}]},
+        "preferred_key": {"oneOf": [{"$ref": "#/$defs/nonblank"}, {"type": "null"}]},
+        "identifiers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        },
+        "source_artifact_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/artifact_id"}
+        },
+        "metadata": {"$ref": "#/$defs/metadata"}
+      }
+    },
+    "note_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "statement_type", "text", "source_refs"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "summary",
+            "research_problem",
+            "method",
+            "reported_finding",
+            "limitation",
+            "relevance",
+            "comparison",
+            "other"
+          ]
+        },
+        "statement_type": {"enum": ["source_report", "analyst_interpretation"]},
+        "text": {"$ref": "#/$defs/nonblank"},
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/source_ref"}
+        }
+      }
+    },
+    "literature_note": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "literature_note_id",
+        "citation_id",
+        "recorded_by",
+        "items"
+      ],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "literature_note_id": {"$ref": "#/$defs/literature_note_id"},
+        "citation_id": {"$ref": "#/$defs/citation_id"},
+        "recorded_by": {"$ref": "#/$defs/proposal_attribution"},
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/note_item"}
+        },
+        "tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/nonblank"}
+        },
+        "metadata": {"$ref": "#/$defs/metadata"}
+      }
+    }
+  }
+}
