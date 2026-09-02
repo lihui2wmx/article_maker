@@ -142,11 +142,10 @@ def test_approved_claim_requires_governing_decision() -> None:
 
 
 def test_candidate_claim_must_not_predeclare_approval() -> None:
+    payload = candidate_claim().model_dump()
+    payload["governing_decision_id"] = "dec-premature-approval"
     with pytest.raises(ValidationError):
-        Claim(
-            **candidate_claim().model_dump(),
-            governing_decision_id="dec-premature-approval",
-        )
+        Claim(**payload)
 
 
 def test_claim_rejects_self_dependency_and_duplicates() -> None:
