@@ -51,7 +51,9 @@ class ProducerType(StrEnum):
     AGENT = "agent"
 
 
-def _validate_artifact_id(value: str) -> str:
+def validate_artifact_id(value: str) -> str:
+    """Validate and return one canonical artifact identifier."""
+
     if not _ARTIFACT_ID_RE.fullmatch(value):
         raise ValueError(
             "artifact IDs must match 'art-' followed by 3-64 lowercase slug characters"
@@ -93,7 +95,7 @@ class Provenance(BaseModel):
     @field_validator("parent_artifacts")
     @classmethod
     def validate_parent_artifacts(cls, values: list[str]) -> list[str]:
-        normalized = [_validate_artifact_id(value) for value in values]
+        normalized = [validate_artifact_id(value) for value in values]
         if len(normalized) != len(set(normalized)):
             raise ValueError("parent_artifacts must not contain duplicates")
         return normalized
@@ -134,8 +136,8 @@ class ArtifactManifest(BaseModel):
 
     @field_validator("artifact_id")
     @classmethod
-    def validate_artifact_id(cls, value: str) -> str:
-        return _validate_artifact_id(value)
+    def validate_artifact_id_field(cls, value: str) -> str:
+        return validate_artifact_id(value)
 
     @field_validator("path")
     @classmethod
