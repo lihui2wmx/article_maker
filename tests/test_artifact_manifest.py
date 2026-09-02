@@ -23,6 +23,7 @@ def source_manifest() -> dict:
         "artifact_id": "art-smith-2025-paper",
         "kind": "paper",
         "stage": "source",
+        "status": "present",
         "path": "literature/sources/smith-2025.pdf",
         "media_type": "application/pdf",
         "title": "Example Reference Paper",
@@ -43,6 +44,7 @@ def derived_manifest() -> dict:
         "artifact_id": "art-exp001-figure-convergence",
         "kind": "figure",
         "stage": "derived",
+        "status": "present",
         "path": "experiments/exp001/figures/convergence.pdf",
         "media_type": "application/pdf",
         "tags": ["experiment", "convergence"],
@@ -92,6 +94,7 @@ def test_derived_manifest_is_valid(derived_manifest: dict) -> None:
         "literature/../outside.pdf",
         "./literature/paper.pdf",
         "literature//paper.pdf",
+        "code/solver/",
         r"literature\paper.pdf",
     ],
 )
@@ -128,14 +131,29 @@ def test_self_parent_is_rejected_by_semantic_validator(derived_manifest: dict) -
         ArtifactManifest.model_validate(manifest)
 
 
-def test_contract_requires_explicit_version_and_parent_list(source_manifest: dict) -> None:
+def test_contract_requires_explicit_version_status_and_parent_list(source_manifest: dict) -> None:
     missing_version = copy.deepcopy(source_manifest)
     del missing_version["schema_version"]
     assert_invalid_in_both(missing_version)
 
+    missing_status = copy.deepcopy(source_manifest)
+    del missing_status["status"]
+    assert_invalid_in_both(missing_status)
+
     missing_parents = copy.deepcopy(source_manifest)
     del missing_parents["provenance"]["parent_artifacts"]
     assert_invalid_in_both(missing_parents)
+
+
+def test_status_is_operational_closed_enum(source_manifest: dict) -> None:
+    for status in ["present", "missing", "superseded"]:
+        manifest = copy.deepcopy(source_manifest)
+        manifest["status"] = status
+        assert_valid_in_both(manifest)
+
+    manifest = copy.deepcopy(source_manifest)
+    manifest["status"] = "approved"
+    assert_invalid_in_both(manifest)
 
 
 def test_unknown_fields_are_rejected(source_manifest: dict) -> None:
@@ -160,3 +178,10 @@ def test_media_type_is_normalized_by_python_model(source_manifest: dict) -> None
     JSON_VALIDATOR.validate(manifest)
     parsed = ArtifactManifest.model_validate(manifest)
     assert parsed.media_type == "application/pdf"
+
+
+def test_python_metadata_accepts_only_json_values(source_manifest: dict) -> None:
+    manifest = copy.deepcopy(source_manifest)
+    manifest["metadata"] = {"not_json": object()}
+    with pytest.raises(PydanticValidationError):
+        ArtifactManifest.model_validate(manifest)
