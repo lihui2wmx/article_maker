@@ -13,8 +13,8 @@ Detailed historical phase notes remain available in Git history. This compact fo
 
 ## Current repository state — 2026-09-02
 
-**Active next phase:** Phase 4A — typed literature and citation contracts  
-**Status:** READY  
+**Active phase:** Phase 4A — typed literature and citation contracts  
+**Status:** IMPLEMENTED — PR #10 initial CI passed; latest-head/integration gates pending  
 **Default branch:** `main`
 
 ### Completed milestones
@@ -30,114 +30,103 @@ Detailed historical phase notes remain available in Git history. This compact fo
 | Phase 2B — repository research-state registry/audit | COMPLETE | PR #7 |
 | Phase 3A — Claim/Evidence governance contracts | COMPLETE | PR #8 |
 | Phase 3B — repository Claim/Evidence registry/audit | COMPLETE | PR #9 |
+| Phase 4A — Literature/Citation contracts | INTEGRATION PENDING | PR #10 |
 
-## Phase 3B — repository Claim/Evidence registry and graph audit
+## Phase 4A — typed literature and citation contracts
 
-**Branch:** `phase/3b-claim-evidence-registry`  
-**Integration carrier:** PR #9  
-**Integrated main commit:** `32d1773b6e18a85f5a079876f4e474f71b8ea94f`  
-**Initial PR CI:** run `33634840309` — success  
-**Latest-head PR CI:** run `33634933371` — success  
-**Merged-main CI:** run `33634993714` — success
-
-**Status:** COMPLETE.
+**Branch:** `phase/4a-literature-citation-contracts`  
+**Integration carrier:** PR #10  
+**Initial PR CI:** run `33636442838` — success
 
 ### Objective
 
-Persist `Claim`, `Evidence`, and `ClaimEvidenceLink` records in deterministic repository locations and audit repository-level scientific graph integrity while preserving the Phase 3A human-authority boundary.
+Define framework-neutral canonical bibliographic and structured literature-reading contracts while separating source metadata, source-reported statements, analyst interpretation, scientific Evidence, and novelty judgments.
 
 ### Implemented
 
-- added `ClaimEvidenceRegistry` in `src/article_maker/claim_registry.py`;
-- added canonical locations:
-  - `claims/<claim-id>.json`;
-  - `evidence/<evidence-id>.json`;
-  - `evidence/links/<link-id>.json`;
-- added typed save/load/list APIs for all three Phase 3 objects;
-- added deterministic UTF-8 JSON serialization with per-record atomic replacement;
-- added malformed-record-tolerant read-only graph audit;
-- resolved Claim -> ResearchQuestion references;
-- resolved optional Claim -> Hypothesis references and verified the Hypothesis belongs to the same ResearchQuestion;
-- resolved Claim -> dependent Claim references;
-- added repository-level Claim dependency cycle detection;
-- resolved Evidence -> Artifact provenance sources through the Phase 1 ArtifactRegistry;
-- resolved ClaimEvidenceLink -> Claim and Evidence endpoints;
-- resolved Claim/Link -> governing Decision references through `research/decisions/`;
-- verified governing Decision subject backlinks and Decision outcome -> lifecycle consistency;
-- audited Claim/Link Decision histories for missing predecessors, cross-subject predecessors, timestamp ordering, branches, cycles, ambiguous roots/heads, and stale governing references;
-- preserved simultaneous accepted `supports` and `contradicts` relations instead of suppressing either side;
-- added explicit graph audit severities:
-  - `error` for structural/governance integrity failures;
-  - `warning` for scientific gaps/conflicts that must not automatically override human decisions;
-- added warning `approved-claim-without-accepted-support`;
-- added warning `accepted-evidence-conflict`;
-- added warning `orphan-evidence`;
-- documented registry/audit semantics in `docs/CLAIM_EVIDENCE_REGISTRY.md`;
-- recorded durable design choices in `docs/decisions/ADR-0008-repository-claim-evidence-graph-audit.md`;
-- exported the registry API from `article_maker`;
-- added filesystem-backed tests for coherent graphs, persistence, missing cross-domain references, Hypothesis/Question mismatch, dependency cycles, scientific warnings, Decision outcome/history integrity, malformed-record tolerance, unsafe registry paths, and missing loads.
+- added stable `cit-*` Citation IDs and `litn-*` LiteratureNote IDs;
+- added `Citation` as canonical bibliographic identity plus repository Artifact provenance;
+- kept DOI/arXiv/PMID/ISBN identifiers as external metadata rather than internal primary keys;
+- added work type, title, structured author records, optional ORCID, partial ISO issued dates, container/publisher/volume/issue/pages fields, optional preferred citation key, external identifiers, and JSON metadata;
+- required every Citation to reference at least one canonical Artifact ID;
+- added `LiteratureNote` as a structured human/agent reading record attached to one Citation;
+- added traceable note items with semantic kinds such as method, reported finding, limitation, relevance, and comparison;
+- explicitly distinguished `source_report` from `analyst_interpretation`;
+- required every note item to reference at least one Artifact + nonblank locator;
+- explicitly kept LiteratureNote items separate from canonical `Evidence`, Claim-Evidence links, Claims, and novelty assertions;
+- deliberately omitted novelty scores and novelty-assertion note kinds;
+- added Draft 2020-12 `schemas/literature.schema.json`;
+- added Python/Pydantic implementation in `src/article_maker/literature.py`;
+- exported literature contracts and shared ID validators;
+- documented the contract in `docs/LITERATURE_CONTRACTS.md`;
+- recorded durable identity/interpretation choices in `docs/decisions/ADR-0009-literature-identity-and-interpretation-separation.md`;
+- added positive/negative Python and JSON Schema tests for identity, provenance, authors, dates, duplicate identifiers, source locators, statement-type separation, duplicate notes/tags, JSON metadata, and the novelty boundary.
 
-### Scientific authority boundary
+### Authority and interpretation boundary
 
-The graph audit may report that an approved Claim lacks accepted support or has accepted contradictory Evidence. Those conditions are warnings, not automatic lifecycle mutations.
+Phase 4A permits agents to record traceable literature notes, including analyst interpretations. Such notes are not automatically scientific Evidence and do not automatically establish support, contradiction, or novelty.
 
-The audit must not:
-
-- revoke or grant Claim approval;
-- accept or reject a ClaimEvidenceLink;
-- suppress inconvenient Evidence;
-- decide which side of conflicting Evidence is scientifically stronger;
-- infer novelty or manuscript suitability.
-
-Human `Decision` records remain authoritative for scientific transitions.
+A later bounded workflow may propose conversion of literature `source_report` records into literature-derived Evidence, but existing human-governed scientific transitions remain authoritative.
 
 ### Validation and scope audit
 
-- `main..phase/3b-claim-evidence-registry` was ahead-only and limited to registry runtime, exports, tests, documentation/ADR, and canonical handoff state;
-- initial PR #9 CI run `33634840309` completed successfully;
-- latest-head PR CI run `33634933371` completed successfully on `e3154c1bb4ff750c161f5f9cf6fee212cb2adea9`;
-- PR #9 was squash-merged into `main` at `32d1773b6e18a85f5a079876f4e474f71b8ea94f`;
-- merged-main CI run `33634993714` completed successfully;
-- all existing Phase 1/2/3A tests plus the new Phase 3B graph suite passed;
-- no semantic extraction, LLM provider, agent runtime, RAG/vector indexing, graph database as canonical state, confidence scoring, novelty judgment, manuscript generation, or experiment orchestration was introduced.
+- `main..phase/4a-literature-citation-contracts` is ahead-only and limited to literature contracts, schema, IDs, exports, tests, docs/ADR, and canonical handoff state;
+- initial PR #10 CI run `33636442838` completed successfully;
+- no live literature search/download client, PDF/PPT parsing, LLM extraction/summarization, embeddings/RAG, citation recommendation, novelty judgment, manuscript bibliography generation, or venue formatting was introduced.
 
-### Phase 3B exit conditions
+### Phase 4A exit conditions
 
-- [x] deterministic Claim/Evidence/Link canonical locations exist;
-- [x] typed save/load/list APIs exist;
-- [x] malformed-record-tolerant read-only graph audit exists;
-- [x] Claim -> ResearchQuestion/Hypothesis consistency is audited;
-- [x] Claim dependency existence and cycles are audited;
-- [x] Evidence -> Artifact provenance resolution is audited;
-- [x] ClaimEvidenceLink endpoints are audited;
-- [x] Claim/Link Decision governance and history are audited;
-- [x] structural errors are distinct from scientific warnings;
-- [x] accepted supporting and contradicting Evidence remain simultaneously visible;
-- [x] approved Claims expose missing accepted support without automatic state mutation;
-- [x] material choices are recorded in ADR-0008;
+- [x] framework-neutral Citation contract exists;
+- [x] framework-neutral LiteratureNote contract exists;
+- [x] internal Citation identity is independent from external identifier namespaces;
+- [x] Citation repository provenance is explicit;
+- [x] source-reported literature content is distinct from analyst interpretation;
+- [x] every structured note item has precise repository provenance;
+- [x] literature notes do not automatically become Evidence or novelty claims;
+- [x] Python and JSON Schema positive/negative tests exist;
+- [x] material choices are recorded in ADR-0009;
 - [x] bounded-scope audit passes;
-- [x] initial and latest-head PR CI pass;
-- [x] PR #9 merged and `main` push CI passes.
+- [x] initial PR CI passes;
+- [ ] latest-head PR CI passes after this handoff update;
+- [ ] PR #10 merged and `main` push CI passes.
 
-## Next bounded increment — Phase 4A: typed literature and citation contracts
+## Next bounded increment — Phase 4B: repository literature registry and citation-integrity audit
 
-**Status:** READY after Phase 3B integration.
+**Status:** BLOCKED until Phase 4A integration is complete.
 
 ### Objective
 
-Define framework-neutral canonical contracts for bibliographic `Citation` / literature-source metadata and structured paper notes that can later support literature extraction, citation integrity, prior-work comparison, and novelty analysis without yet introducing network search, semantic retrieval, LLM extraction, or automatic novelty assertions.
+Persist Citation and LiteratureNote records in deterministic repository locations and audit cross-record provenance/identity integrity without automatically merging works, promoting notes to Evidence, retrieving papers, or judging novelty.
 
-### Expected boundary
+### Expected canonical locations
 
-The Phase 4A contract should distinguish bibliographic identity/metadata from AI or human interpretation, preserve provenance back to registered literature Artifacts, and keep novelty claims outside automated authority.
+```text
+literature/metadata/<citation-id>.json
+literature/notes/<literature-note-id>.json
+```
+
+### Required audit boundary
+
+At minimum Phase 4B should check:
+
+- Citation -> Artifact existence;
+- LiteratureNote -> Citation existence;
+- LiteratureNote source Artifact existence;
+- LiteratureNote source Artifact belongs to the referenced Citation provenance set;
+- duplicate preferred citation keys;
+- repeated external identifier values across distinct Citations;
+- filename/ID mismatch and duplicate IDs;
+- malformed-record tolerance;
+- duplicate-work signals are warnings/review tasks, not automatic record merges.
 
 ### Non-goals
 
-Do not introduce in Phase 4A:
+Do not introduce in Phase 4B:
 
 - live literature search/download clients;
-- LLM-based PDF parsing or summarization;
-- embeddings/vector search;
-- automatic novelty judgment;
-- manuscript generation;
-- venue-specific writing behavior.
+- PDF/PPT semantic parsing;
+- LLM summarization/extraction;
+- embeddings/vector retrieval;
+- automatic note-to-Evidence promotion;
+- automatic novelty assertions;
+- manuscript generation or venue-specific formatting.
