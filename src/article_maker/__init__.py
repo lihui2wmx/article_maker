@@ -20,6 +20,13 @@ from .claim_evidence import (
     EvidenceSourceRef,
     RelationStatus,
 )
+from .claim_registry import (
+    ClaimEvidenceAuditFinding,
+    ClaimEvidenceNotFoundError,
+    ClaimEvidenceRegistry,
+    ClaimEvidenceRegistryError,
+    GraphAuditSeverity,
+)
 from .discovery import (
     ArtifactDiscoverer,
     BatchRegistrationPlan,
@@ -101,7 +108,11 @@ __all__ = [
     "BatchRegistrationPlan",
     "BatchRollbackError",
     "Claim",
+    "ClaimEvidenceAuditFinding",
     "ClaimEvidenceLink",
+    "ClaimEvidenceNotFoundError",
+    "ClaimEvidenceRegistry",
+    "ClaimEvidenceRegistryError",
     "ClaimStatus",
     "Decision",
     "DecisionOutcome",
@@ -115,6 +126,7 @@ __all__ = [
     "EvidenceKind",
     "EvidenceRelation",
     "EvidenceSourceRef",
+    "GraphAuditSeverity",
     "Hypothesis",
     "ParentArtifactNotFoundError",
     "PlannedRegistration",
