@@ -3,9 +3,9 @@ from __future__ import annotations
 import re
 from enum import StrEnum
 from pathlib import PurePosixPath
-from typing import Any, Literal
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator, model_validator
 
 _ARTIFACT_ID_RE = re.compile(r"^art-[a-z0-9][a-z0-9._-]{2,63}$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -103,7 +103,7 @@ class ArtifactManifest(BaseModel):
     checksum_sha256: str | None = None
     tags: list[str] = Field(default_factory=list)
     provenance: Provenance
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, JsonValue] = Field(default_factory=dict)
 
     @field_validator("artifact_id")
     @classmethod
