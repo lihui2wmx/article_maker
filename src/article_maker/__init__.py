@@ -10,6 +10,18 @@ from .artifacts import (
     validate_artifact_id,
     validate_repository_path,
 )
+from .discovery import (
+    ArtifactDiscoverer,
+    BatchRegistrationPlan,
+    DiscoveredArtifact,
+    DiscoveryError,
+    DiscoveryPolicy,
+    DiscoveryRootError,
+    DiscoveryState,
+    PlannedRegistration,
+    RegistrationPlanError,
+    RegistrationSelection,
+)
 from .registration import (
     ArtifactConflictError,
     ArtifactNotFoundError,
@@ -25,6 +37,7 @@ from .registration import (
 
 __all__ = [
     "ArtifactConflictError",
+    "ArtifactDiscoverer",
     "ArtifactKind",
     "ArtifactManifest",
     "ArtifactNotFoundError",
@@ -34,9 +47,18 @@ __all__ = [
     "ArtifactStage",
     "ArtifactStatus",
     "AuditFinding",
+    "BatchRegistrationPlan",
+    "DiscoveredArtifact",
+    "DiscoveryError",
+    "DiscoveryPolicy",
+    "DiscoveryRootError",
+    "DiscoveryState",
     "ParentArtifactNotFoundError",
+    "PlannedRegistration",
     "ProducerType",
     "Provenance",
+    "RegistrationPlanError",
+    "RegistrationSelection",
     "generated_artifact_id",
     "infer_media_type",
     "sha256_file",
