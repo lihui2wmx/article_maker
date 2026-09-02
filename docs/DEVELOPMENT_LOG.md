@@ -13,8 +13,8 @@ Detailed historical phase notes remain available in Git history. This compact fo
 
 ## Current repository state — 2026-09-02
 
-**Active phase:** Phase 4B — repository literature registry and citation-integrity audit  
-**Status:** IMPLEMENTED — PR #11 initial CI passed; latest-head/integration gates pending  
+**Active next phase:** Phase 4C — reviewed literature-to-Evidence proposal bridge  
+**Status:** READY  
 **Default branch:** `main`
 
 ### Completed milestones
@@ -31,13 +31,18 @@ Detailed historical phase notes remain available in Git history. This compact fo
 | Phase 3A — Claim/Evidence governance contracts | COMPLETE | PR #8 |
 | Phase 3B — repository Claim/Evidence registry/audit | COMPLETE | PR #9 |
 | Phase 4A — Literature/Citation contracts | COMPLETE | PR #10 |
-| Phase 4B — literature registry/citation-integrity audit | INTEGRATION PENDING | PR #11 |
+| Phase 4B — literature registry/citation-integrity audit | COMPLETE | PR #11 |
 
 ## Phase 4B — repository literature registry and citation-integrity audit
 
 **Branch:** `phase/4b-literature-registry`  
 **Integration carrier:** PR #11  
-**Initial PR CI:** run `33637342522` — success
+**Integrated main commit:** `a0a83637c11a0741d71cb2611f13db40cb2c2b32`  
+**Initial PR CI:** run `33637342522` — success  
+**Latest-head PR CI:** run `33637473946` — success  
+**Merged-main CI:** run `33637582537` — success
+
+**Status:** COMPLETE.
 
 ### Objective
 
@@ -82,8 +87,12 @@ The audit must not:
 
 ### Validation and scope audit
 
-- `main..phase/4b-literature-registry` is ahead-only and limited to registry runtime, exports, tests, documentation/ADR, and this handoff state;
-- initial PR #11 CI run `33637342522` completed successfully, including all existing Phase 1–4A tests and the new Phase 4B suite;
+- `main..phase/4b-literature-registry` was ahead-only and limited to registry runtime, exports, tests, documentation/ADR, and canonical handoff state;
+- initial PR #11 CI run `33637342522` completed successfully;
+- latest-head PR CI run `33637473946` completed successfully on `48ca15382c7b45197b023b49f46369d4b927f4f4`;
+- PR #11 was squash-merged into `main` at `a0a83637c11a0741d71cb2611f13db40cb2c2b32`;
+- merged-main CI run `33637582537` completed successfully;
+- all existing Phase 1–4A tests plus the new Phase 4B literature registry suite passed;
 - no live literature search/download client, semantic parser, LLM extraction/summarization, embeddings/RAG, automatic record merge, automatic note-to-Evidence promotion, novelty judgment, manuscript generation, or venue formatting was introduced.
 
 ### Phase 4B exit conditions
@@ -100,13 +109,12 @@ The audit must not:
 - [x] filename/ID mismatch and duplicate internal IDs are audited;
 - [x] material choices are recorded in ADR-0010;
 - [x] bounded-scope audit passes;
-- [x] initial PR CI passes;
-- [ ] latest-head PR CI passes after this canonical handoff update;
-- [ ] PR #11 merged and `main` push CI passes.
+- [x] initial and latest-head PR CI pass;
+- [x] PR #11 merged and `main` push CI passes.
 
 ## Next bounded increment — Phase 4C: reviewed literature-to-Evidence proposal bridge
 
-**Status:** BLOCKED until Phase 4B integration is complete.
+**Status:** READY after Phase 4B integration.
 
 ### Objective
 
