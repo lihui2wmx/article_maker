@@ -347,12 +347,71 @@ Define framework-neutral, human-auditable contracts for `ResearchQuestion`, `Hyp
 
 No Claim/Evidence objects, claim approval, semantic parsing, LLM provider, agent orchestration, automatic research-direction approval, external identity/authentication system, experiment orchestration, or manuscript generation was introduced.
 
-## Ready next increment — Phase 2B: repository-level research-state registry and consistency audit
+## 2026-09-02 — Phase 2B: repository-level research-state registry and consistency audit
 
-**Status:** READY after Phase 2A integration.
+**Branch:** `phase/2b-research-state-registry`  
+**Integration carrier:** PR #7
+
+**Status:** COMPLETE at implementation/review boundary — bounded-scope audit and initial PR CI passed; integration pending.
 
 ### Objective
 
 Persist ResearchQuestion, Hypothesis, and Decision records in deterministic repository locations and resolve their cross-object references so human-governed research state can be audited as a coherent graph.
 
-Phase 2B must remain a repository-state integrity layer. It must not introduce Claim/Evidence semantics, LLM extraction, or autonomous approval.
+### Implemented
+
+- added `ResearchStateRegistry` with canonical locations under `research/questions/`, `research/hypotheses/`, and `research/decisions/`;
+- added typed save/load/list operations with deterministic UTF-8 JSON and per-record atomic replacement;
+- added malformed-record tolerant repository audit so one bad file does not hide unrelated integrity findings;
+- resolved Hypothesis -> ResearchQuestion references;
+- resolved governed Question/Hypothesis -> Decision references;
+- verified governing Decision subject backlinks and outcome -> lifecycle mapping;
+- resolved Question/Hypothesis/Decision `artifact_refs` through the Phase 1 ArtifactRegistry;
+- added filename/ID mismatch and duplicate-ID findings;
+- extended Decision with optional backward-compatible `previous_decision_id`;
+- required Decision histories for one subject to form a single linear chain;
+- added findings for missing predecessor, cross-subject predecessor, non-increasing timestamps, cycles, multiple roots, branches, multiple heads, and stale governing Decision references;
+- explicitly required the governed object to reference the Decision-history head rather than inferring current state from the newest timestamp/file;
+- documented the registry in `docs/RESEARCH_STATE_REGISTRY.md`;
+- recorded durable persistence/history choices in `docs/decisions/ADR-0006-research-state-registry-and-decision-history.md`;
+- added filesystem-backed tests for coherent graphs, persistence, missing references, subject/outcome mismatch, Decision-history branching, predecessor errors, malformed records, and filename identity mismatch.
+
+### Validation and audit
+
+- `main..phase/2b-research-state-registry` was audited as ahead-only and limited to the registry/audit runtime, backward-compatible Decision-history contract extension, package exports, tests, documentation/ADR, and development state;
+- PR #7 CI run `33624958368` completed successfully on implementation head `f38cf24367ea9ae4a12afe174efee45ec6ec55d7`;
+- existing Phase 1 and Phase 2A suites plus the new repository-level research-state suite passed.
+
+### Phase 2B exit conditions
+
+- [x] deterministic research-state repository layout exists;
+- [x] typed save/load/list APIs exist;
+- [x] malformed-record tolerant repository audit exists;
+- [x] Hypothesis -> ResearchQuestion existence is audited;
+- [x] governed state -> Decision existence is audited;
+- [x] Decision -> subject backlink and outcome consistency are audited;
+- [x] Artifact references are resolved against canonical manifests;
+- [x] Decision history has explicit predecessor linkage;
+- [x] Decision-history branching/cycles/ambiguity are surfaced;
+- [x] current governed state must explicitly reference the unique Decision-history head;
+- [x] material design decisions are recorded in ADR-0006;
+- [x] bounded-scope audit passes;
+- [x] initial PR CI passes;
+- [ ] latest-head PR CI passes after development-log update;
+- [ ] PR #7 merged and main push CI passes.
+
+### Transaction and authority boundary
+
+Phase 2B provides per-record atomic writes and repository-level consistency audit. It does not claim crash-safe multi-file transactions, cross-process locking, or authentication of the human label in `decided_by`. A newer Decision record never implicitly changes canonical research direction; the governed object must explicitly reference the current Decision-history head.
+
+### Non-goals preserved
+
+No Claim/Evidence objects, semantic extraction, LLM provider, agent runtime, automatic approval, experiment orchestration, database-backed canonical state, or manuscript generation was introduced.
+
+## Ready next increment after Phase 2B integration — Phase 3A: typed Claim/Evidence contracts
+
+**Status:** BLOCKED on Phase 2B integration.
+
+### Objective
+
+Define the smallest framework-neutral contracts for candidate/approved `Claim` records and provenance-bearing `Evidence` records, including explicit support/contradiction relations and human claim-approval semantics, without yet implementing extraction agents, retrieval, manuscript generation, or automated novelty judgments.
