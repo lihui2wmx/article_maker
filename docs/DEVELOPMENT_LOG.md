@@ -281,12 +281,76 @@ Phase 1D provides in-process all-or-nothing behavior for manifests newly created
 
 No content parsing, PDF/PPT extraction, embeddings, RAG, vector database, LLM provider, agent runtime, claim/evidence graph, manuscript generator, changed-artifact refresh, path move/rebind, CLI approval flow, transaction journal, or cross-process lock was introduced.
 
-## Ready next increment — Phase 2A: research-state contracts
+## 2026-09-02 — Phase 2A: research-state contracts
 
-**Status:** READY after Phase 1D integration.
+**Branch:** `phase/2a-research-state-contracts`  
+**Integration carrier:** PR #6
+
+**Status:** COMPLETE at implementation/review boundary — bounded-scope audit and initial PR CI passed; integration pending.
 
 ### Objective
 
-Begin Phase 2 by defining framework-neutral, human-auditable contracts for `ResearchQuestion`, `Hypothesis`, and `Decision`, including explicit lifecycle/approval semantics and artifact references without yet implementing claims/evidence, LLM extraction, or agent orchestration.
+Define framework-neutral, human-auditable contracts for `ResearchQuestion`, `Hypothesis`, and `Decision` so research direction becomes explicit repository state without allowing agents to silently grant scientific approval.
 
-Phase 2A must preserve the existing human authority gates: agents may propose research questions and hypotheses, but canonical acceptance of research direction requires explicit human approval.
+### Implemented
+
+- added `schemas/research-state.schema.json` as the JSON Schema Draft 2020-12 canonical contract bundle;
+- added Pydantic runtime contracts in `src/article_maker/research_state.py`;
+- added stable `rq-*`, `hyp-*`, and `dec-*` identifier grammars;
+- added governed lifecycle states `proposed`, `accepted`, `rejected`, and `superseded`;
+- separated proposal attribution (`human | agent`) from approval authority;
+- prohibited governing Decision references on proposed objects;
+- required `governing_decision_id` for accepted, rejected, and superseded objects;
+- required each Hypothesis to reference exactly one syntactically valid ResearchQuestion ID;
+- fixed `Decision.authority` to `human` in schema version 1.0;
+- added Decision subject type/ID consistency, outcome, human actor label, timezone-aware decision timestamp, required rationale, artifact references, and JSON metadata;
+- reused the Phase 1 `art-*` grammar for supporting artifact references and rejected duplicates;
+- documented lifecycle and validation boundaries in `docs/RESEARCH_STATE.md`;
+- recorded durable governance choices in `docs/decisions/ADR-0005-research-state-governance-contract.md`;
+- added Python and JSON Schema tests for representative valid proposals/decisions and invalid approval, ID, timestamp, duplicate-reference, and lifecycle cases.
+
+### Validation and audit
+
+- `main..phase/2a-research-state-contracts` was audited as ahead-only and limited to research-state schema/runtime contracts, package exports, tests, documentation/ADR, and development state;
+- PR #6 CI run `33622917667` completed successfully on initial head `059be39ac40cf8a9db9410472df2f7cdb871adac`;
+- existing Phase 1 suites plus the new research-state contract suite passed.
+
+### Phase 2A exit conditions
+
+- [x] framework-neutral ResearchQuestion/Hypothesis/Decision contract exists;
+- [x] Python validation implementation exists;
+- [x] proposal authority is distinct from approval authority;
+- [x] non-proposed canonical state requires an explicit Decision reference;
+- [x] Decision authority is human-only in schema version 1.0;
+- [x] artifact references reuse stable Artifact IDs;
+- [x] representative positive/negative contract tests exist;
+- [x] object-level versus repository-level validation boundary is documented;
+- [x] material governance choices are recorded in ADR-0005;
+- [x] bounded-scope audit passes;
+- [x] initial remote PR CI passes;
+- [ ] latest-head PR CI passes after development-log update;
+- [ ] PR #6 merged and main push CI passes.
+
+### Explicitly deferred to Phase 2B
+
+- persistence layout for ResearchQuestion/Hypothesis/Decision records;
+- Hypothesis -> ResearchQuestion existence resolution;
+- governed object -> Decision existence resolution;
+- Decision -> governed subject backlink validation;
+- Decision outcome -> lifecycle status consistency;
+- Artifact reference existence validation;
+- conflicting Decision detection and repository-level audit.
+
+### Non-goals preserved
+
+No Claim/Evidence objects, claim approval, semantic parsing, LLM provider, agent orchestration, automatic research-direction approval, external identity/authentication system, experiment orchestration, or manuscript generation was introduced.
+
+## Ready next increment after Phase 2A integration — Phase 2B: repository-level research-state registry and consistency audit
+
+**Status:** BLOCKED on Phase 2A integration.
+
+### Objective
+
+Persist ResearchQuestion, Hypothesis, and Decision records in deterministic repository locations and resolve their cross-object references so human-governed research state can be audited as a coherent graph.
+
+Phase 2B must remain a repository-state integrity layer. It must not introduce Claim/Evidence semantics, LLM extraction, or autonomous approval.
