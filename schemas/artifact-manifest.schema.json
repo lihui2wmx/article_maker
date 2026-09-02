@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:article-maker:schema:artifact-manifest:1.0",
+  "title": "Artifact Manifest",
+  "description": "Canonical manifest for one repository-visible research artifact.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_id",
+    "kind",
+    "stage",
+    "path",
+    "media_type",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "artifact_id": {
+      "$ref": "#/$defs/artifact_id"
+    },
+    "kind": {
+      "enum": [
+        "paper",
+        "note",
+        "slide_deck",
+        "source_code",
+        "dataset",
+        "experiment_config",
+        "experiment_output",
+        "figure",
+        "table",
+        "manuscript_source",
+        "bibliography",
+        "supplementary",
+        "model_output",
+        "other"
+      ]
+    },
+    "stage": {
+      "enum": ["source", "derived"]
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!\\./)(?!.*//)(?!.*\\\\)(?!.*(?:^|/)\\.{1,2}(?:/|$)).+$"
+    },
+    "media_type": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9!#$&^_.+\\-]*/[A-Za-z0-9][A-Za-z0-9!#$&^_.+\\-]*$"
+    },
+    "title": {
+      "type": "string",
+      "pattern": ".*\\S.*"
+    },
+    "description": {
+      "type": "string",
+      "pattern": ".*\\S.*"
+    },
+    "checksum_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": ".*\\S.*"
+      }
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "artifact_id": {
+      "type": "string",
+      "pattern": "^art-[a-z0-9][a-z0-9._-]{2,63}$"
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["producer", "parent_artifacts"],
+      "properties": {
+        "producer": {
+          "enum": ["external", "human", "experiment", "tool", "agent"]
+        },
+        "parent_artifacts": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/artifact_id"
+          }
+        },
+        "git_revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{7,64}$"
+        },
+        "command": {
+          "type": "string",
+          "pattern": ".*\\S.*"
+        },
+        "tool": {
+          "type": "string",
+          "pattern": ".*\\S.*"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "stage": {"const": "source"}
+        },
+        "required": ["stage"]
+      },
+      "then": {
+        "properties": {
+          "provenance": {
+            "properties": {
+              "parent_artifacts": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "stage": {"const": "derived"}
+        },
+        "required": ["stage"]
+      },
+      "then": {
+        "properties": {
+          "provenance": {
+            "properties": {
+              "parent_artifacts": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
