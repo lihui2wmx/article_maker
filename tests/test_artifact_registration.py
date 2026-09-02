@@ -101,7 +101,7 @@ def test_unknown_extension_uses_conservative_media_fallback(tmp_path: Path) -> N
 )
 def test_registration_rejects_non_repository_paths(tmp_path: Path, bad_path: str) -> None:
     registry = ArtifactRegistry(tmp_path)
-    with pytest.raises((ArtifactPathError, ValueError)):
+    with pytest.raises(ArtifactPathError):
         registry.register(
             bad_path,
             kind=ArtifactKind.OTHER,
@@ -140,6 +140,22 @@ def test_derived_registration_requires_registered_parents(tmp_path: Path) -> Non
             producer=ProducerType.EXPERIMENT,
             stage=ArtifactStage.DERIVED,
             parent_artifacts=["art-missing-parent"],
+        )
+
+
+def test_parent_id_is_validated_before_manifest_path_lookup(tmp_path: Path) -> None:
+    output = tmp_path / "experiments" / "result.json"
+    output.parent.mkdir(parents=True)
+    output.write_text("{}\n", encoding="utf-8")
+
+    registry = ArtifactRegistry(tmp_path)
+    with pytest.raises(ValueError, match="artifact IDs must match"):
+        registry.register(
+            "experiments/result.json",
+            kind=ArtifactKind.EXPERIMENT_OUTPUT,
+            producer=ProducerType.EXPERIMENT,
+            stage=ArtifactStage.DERIVED,
+            parent_artifacts=["art-../../../outside"],
         )
 
 
