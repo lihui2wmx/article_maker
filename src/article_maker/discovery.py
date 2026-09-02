@@ -71,7 +71,13 @@ class DiscoveryPolicy:
         if not self.roots:
             raise DiscoveryRootError("discovery requires at least one explicit root")
 
-        normalized_roots = tuple(validate_repository_path(root) for root in self.roots)
+        try:
+            normalized_roots = tuple(validate_repository_path(root) for root in self.roots)
+        except ValueError as exc:
+            raise DiscoveryRootError(f"invalid discovery root: {exc}") from exc
+
+        if any(root == "." for root in normalized_roots):
+            raise DiscoveryRootError("repository root '.' is not allowed as an unbounded discovery root")
         if len(normalized_roots) != len(set(normalized_roots)):
             raise DiscoveryRootError("discovery roots must not contain duplicates")
         object.__setattr__(self, "roots", normalized_roots)
@@ -143,6 +149,8 @@ class ArtifactDiscoverer:
 
     def _resolve_root(self, repository_path: str) -> Path:
         candidate = self.repository_root.joinpath(*repository_path.split("/"))
+        if candidate.is_symlink():
+            raise DiscoveryRootError(f"discovery root must not be a symlink: {repository_path}")
         try:
             resolved = candidate.resolve(strict=True)
         except FileNotFoundError as exc:
@@ -175,8 +183,6 @@ class ArtifactDiscoverer:
         )
 
     def _iter_root_files(self, root_path: Path) -> Iterable[Path]:
-        if root_path.is_symlink():
-            return ()
         if root_path.is_file():
             return (root_path,)
         if not root_path.is_dir():
