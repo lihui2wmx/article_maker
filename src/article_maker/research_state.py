@@ -8,6 +8,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator, model_validator
 
 from .artifacts import validate_artifact_id
+from .scientific_ids import validate_claim_evidence_link_id, validate_claim_id
 
 _RESEARCH_QUESTION_ID_RE = re.compile(r"^rq-[a-z0-9][a-z0-9._-]{2,63}$")
 _HYPOTHESIS_ID_RE = re.compile(r"^hyp-[a-z0-9][a-z0-9._-]{2,63}$")
@@ -29,6 +30,8 @@ class ProposalSource(StrEnum):
 class DecisionSubjectType(StrEnum):
     RESEARCH_QUESTION = "research_question"
     HYPOTHESIS = "hypothesis"
+    CLAIM = "claim"
+    CLAIM_EVIDENCE_LINK = "claim_evidence_link"
 
 
 class DecisionOutcome(StrEnum):
@@ -159,7 +162,7 @@ class Hypothesis(_ResearchStateBase):
 
 
 class Decision(BaseModel):
-    """Human authority record governing a research-question or hypothesis transition."""
+    """Human authority record governing a typed scientific-state transition."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -216,6 +219,10 @@ class Decision(BaseModel):
             validate_research_question_id(self.subject_id)
         elif self.subject_type is DecisionSubjectType.HYPOTHESIS:
             validate_hypothesis_id(self.subject_id)
+        elif self.subject_type is DecisionSubjectType.CLAIM:
+            validate_claim_id(self.subject_id)
+        elif self.subject_type is DecisionSubjectType.CLAIM_EVIDENCE_LINK:
+            validate_claim_evidence_link_id(self.subject_id)
         if self.previous_decision_id == self.decision_id:
             raise ValueError("a decision must not reference itself as previous_decision_id")
         return self

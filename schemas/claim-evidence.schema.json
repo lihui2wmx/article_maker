@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:article-maker:schema:claim-evidence:1.0",
+  "title": "Claim and Evidence Contracts",
+  "description": "Canonical framework-neutral contracts for scientific Claims, provenance-bearing Evidence, and governed Claim-Evidence relations.",
+  "oneOf": [
+    {"$ref": "#/$defs/claim"},
+    {"$ref": "#/$defs/evidence"},
+    {"$ref": "#/$defs/claim_evidence_link"}
+  ],
+  "$defs": {
+    "claim_id": {"type": "string", "pattern": "^clm-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "evidence_id": {"type": "string", "pattern": "^ev-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "claim_evidence_link_id": {"type": "string", "pattern": "^cel-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "research_question_id": {"type": "string", "pattern": "^rq-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "hypothesis_id": {"type": "string", "pattern": "^hyp-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "decision_id": {"type": "string", "pattern": "^dec-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "artifact_id": {"type": "string", "pattern": "^art-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "metadata": {"type": "object"},
+    "proposal_attribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "actor"],
+      "properties": {
+        "source": {"enum": ["human", "agent"]},
+        "actor": {"type": "string", "pattern": ".*\\S.*"}
+      }
+    },
+    "evidence_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id"],
+      "properties": {
+        "artifact_id": {"$ref": "#/$defs/artifact_id"},
+        "locator": {
+          "oneOf": [
+            {"type": "string", "pattern": ".*\\S.*"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "claim_id", "research_question_id", "statement", "status", "proposed_by"],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "claim_id": {"$ref": "#/$defs/claim_id"},
+        "research_question_id": {"$ref": "#/$defs/research_question_id"},
+        "hypothesis_id": {"oneOf": [{"$ref": "#/$defs/hypothesis_id"}, {"type": "null"}]},
+        "statement": {"type": "string", "pattern": ".*\\S.*"},
+        "status": {"enum": ["candidate", "approved", "rejected", "superseded"]},
+        "proposed_by": {"$ref": "#/$defs/proposal_attribution"},
+        "governing_decision_id": {"oneOf": [{"$ref": "#/$defs/decision_id"}, {"type": "null"}]},
+        "depends_on_claim_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/claim_id"}
+        },
+        "metadata": {"$ref": "#/$defs/metadata"}
+      },
+      "allOf": [{
+        "if": {"properties": {"status": {"const": "candidate"}}, "required": ["status"]},
+        "then": {"properties": {"governing_decision_id": {"type": "null"}}},
+        "else": {
+          "required": ["governing_decision_id"],
+          "properties": {"governing_decision_id": {"$ref": "#/$defs/decision_id"}}
+        }
+      }]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "evidence_id", "kind", "description", "recorded_by", "sources"],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "evidence_id": {"$ref": "#/$defs/evidence_id"},
+        "kind": {
+          "enum": ["experiment_result", "theory_result", "literature_statement", "dataset_observation", "analysis_result", "other"]
+        },
+        "description": {"type": "string", "pattern": ".*\\S.*"},
+        "recorded_by": {"$ref": "#/$defs/proposal_attribution"},
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/evidence_source"}
+        },
+        "metadata": {"$ref": "#/$defs/metadata"}
+      }
+    },
+    "claim_evidence_link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "link_id", "claim_id", "evidence_id", "relation", "rationale", "status", "proposed_by"],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "link_id": {"$ref": "#/$defs/claim_evidence_link_id"},
+        "claim_id": {"$ref": "#/$defs/claim_id"},
+        "evidence_id": {"$ref": "#/$defs/evidence_id"},
+        "relation": {"enum": ["supports", "contradicts"]},
+        "rationale": {"type": "string", "pattern": ".*\\S.*"},
+        "status": {"enum": ["proposed", "accepted", "rejected", "superseded"]},
+        "proposed_by": {"$ref": "#/$defs/proposal_attribution"},
+        "governing_decision_id": {"oneOf": [{"$ref": "#/$defs/decision_id"}, {"type": "null"}]},
+        "metadata": {"$ref": "#/$defs/metadata"}
+      },
+      "allOf": [{
+        "if": {"properties": {"status": {"const": "proposed"}}, "required": ["status"]},
+        "then": {"properties": {"governing_decision_id": {"type": "null"}}},
+        "else": {
+          "required": ["governing_decision_id"],
+          "properties": {"governing_decision_id": {"$ref": "#/$defs/decision_id"}}
+        }
+      }]
+    }
+  }
+}
