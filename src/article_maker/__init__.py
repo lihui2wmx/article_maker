@@ -7,6 +7,7 @@ from .artifacts import (
     ArtifactStatus,
     ProducerType,
     Provenance,
+    validate_artifact_id,
     validate_repository_path,
 )
 from .registration import (
@@ -39,5 +40,6 @@ __all__ = [
     "generated_artifact_id",
     "infer_media_type",
     "sha256_file",
+    "validate_artifact_id",
     "validate_repository_path",
 ]
