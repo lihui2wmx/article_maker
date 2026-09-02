@@ -222,9 +222,10 @@ No content parsing, PDF/PPT extraction, embeddings, RAG, vector database, LLM pr
 ## 2026-09-02 — Phase 1D: reviewed batch-plan execution
 
 **Branch:** `phase/1d-batch-execution`  
-**Integration carrier:** PR #5
+**Integration carrier:** PR #5  
+**Integrated main commit:** `a74f4cfbcb0bdac8bb5e9e7f579f32cb4e3cf7f3`
 
-**Status:** COMPLETE at implementation/review boundary — bounded-scope audit and latest-head PR CI passed; integration pending.
+**Status:** COMPLETE — bounded-scope audit, latest-head PR CI, merge, and main push CI all passed.
 
 ### Objective
 
@@ -251,7 +252,9 @@ Execute an exact reviewed `BatchRegistrationPlan` without silently accepting pos
 ### Validation and audit
 
 - `main..phase/1d-batch-execution` was audited as ahead-only and limited to execution runtime code, package exports, tests, execution documentation/ADR, and development state;
-- PR #5 CI run `33620903831` completed successfully on head `a4a63fa5e68270688009e611a88d278e7226e6bb`;
+- PR #5 CI runs `33620903831` and `33621008814` completed successfully, including latest head `eb137f3d096664cf07180ead18649066a5ac9c28`;
+- PR #5 was squash-merged into `main` at `a74f4cfbcb0bdac8bb5e9e7f579f32cb4e3cf7f3`;
+- main push CI run `33621073665` completed successfully;
 - existing Phase 1 artifact contract/registration/discovery suites and the new batch-execution suite passed.
 
 ### Phase 1D exit conditions
@@ -268,7 +271,7 @@ Execute an exact reviewed `BatchRegistrationPlan` without silently accepting pos
 - [x] material execution decisions are documented in ADR-0004;
 - [x] bounded-scope audit passes;
 - [x] latest-head PR CI passes;
-- [ ] PR #5 merged and main push CI passes.
+- [x] PR #5 merged and main push CI passes.
 
 ### Transaction boundary
 
@@ -278,9 +281,9 @@ Phase 1D provides in-process all-or-nothing behavior for manifests newly created
 
 No content parsing, PDF/PPT extraction, embeddings, RAG, vector database, LLM provider, agent runtime, claim/evidence graph, manuscript generator, changed-artifact refresh, path move/rebind, CLI approval flow, transaction journal, or cross-process lock was introduced.
 
-## Ready next increment after Phase 1D integration — Phase 2A: research-state contracts
+## Ready next increment — Phase 2A: research-state contracts
 
-**Status:** BLOCKED on Phase 1D integration.
+**Status:** READY after Phase 1D integration.
 
 ### Objective
 
