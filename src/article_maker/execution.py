@@ -8,7 +8,6 @@ from pathlib import Path
 from .artifacts import ArtifactManifest, ArtifactStatus
 from .discovery import BatchRegistrationPlan, DiscoveryPolicy
 from .registration import (
-    ArtifactConflictError,
     ArtifactNotFoundError,
     ArtifactPathError,
     ArtifactRegistry,
@@ -42,7 +41,7 @@ class BatchRollbackError(BatchExecutionError):
 
 
 class PostWriteAuditError(BatchExecutionError):
-    """Raised when newly persisted manifests fail immediate registry audit."""
+    """Raised when newly persisted manifests fail immediate verification or audit."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +54,7 @@ def batch_plan_digest(plan: BatchRegistrationPlan) -> str:
     """Return a deterministic digest identifying the exact reviewed batch plan."""
 
     payload = {
+        "digest_version": "1",
         "roots": list(plan.roots),
         "actions": [
             action.manifest.model_dump(mode="json")
@@ -150,12 +150,22 @@ class BatchPlanExecutor:
                     f"planned parent is no longer registered: {parent_id}"
                 ) from exc
 
+    def _reject_symlink_components(self, repository_path: str) -> None:
+        candidate = self.registry.repository_root
+        for part in repository_path.split("/"):
+            candidate = candidate / part
+            if candidate.is_symlink():
+                raise StalePlanError(
+                    f"planned artifact path acquired a symbolic-link component: {repository_path}"
+                )
+
     def _current_file(self, manifest: ArtifactManifest) -> Path:
         if manifest.status is not ArtifactStatus.PRESENT:
             raise BatchPreflightError(
                 f"batch execution only accepts present artifacts: {manifest.artifact_id}"
             )
 
+        self._reject_symlink_components(manifest.path)
         try:
             path = self.registry._resolve_repository_path(  # noqa: SLF001
                 manifest.path,
@@ -214,6 +224,20 @@ class BatchPlanExecutor:
                 "failed to roll back created manifests: " + ", ".join(sorted(residual))
             )
 
+    def _verify_persisted_exact(self, plan: BatchRegistrationPlan) -> None:
+        for action in plan.actions:
+            expected = action.manifest
+            try:
+                persisted = self.registry.load(expected.artifact_id)
+            except (ArtifactNotFoundError, ValueError) as exc:
+                raise PostWriteAuditError(
+                    f"new manifest could not be reloaded: {expected.artifact_id}"
+                ) from exc
+            if persisted != expected:
+                raise PostWriteAuditError(
+                    f"persisted manifest differs from reviewed plan: {expected.artifact_id}"
+                )
+
     def _audit_created(self, artifact_ids: set[str]) -> None:
         findings = [
             finding
@@ -260,6 +284,7 @@ class BatchPlanExecutor:
                 self.registry._write_manifest(manifest)  # noqa: SLF001
                 created_ids.append(manifest.artifact_id)
 
+            self._verify_persisted_exact(plan)
             self._audit_created(set(created_ids))
         except Exception:
             try:
