@@ -2,9 +2,9 @@
 
 ## Purpose
 
-An `ArtifactManifest` is the smallest durable record that lets `article_maker` identify a research artifact, locate it in the repository, classify its role, and trace how it was produced.
+An `ArtifactManifest` is the smallest durable record that lets `article_maker` identify a research artifact, locate it in the repository, classify its role, record its operational lifecycle state, and trace how it was produced.
 
-The manifest is deliberately **not** a paper parser, experiment schema, citation record, claim record, or vector-index entry. Those objects will reference artifacts rather than overloading this contract.
+The manifest is deliberately **not** a paper parser, experiment schema, citation record, claim record, approval record, or vector-index entry. Those objects will reference artifacts rather than overloading this contract.
 
 The language-independent contract is `schemas/artifact-manifest.schema.json`. The Pydantic model in `src/article_maker/artifacts.py` is the initial Python validator and may enforce semantic invariants that JSON Schema cannot express directly.
 
@@ -16,11 +16,12 @@ The language-independent contract is `schemas/artifact-manifest.schema.json`. Th
 | `artifact_id` | Stable repository identifier matching `art-[a-z0-9][a-z0-9._-]{2,63}`. It is independent of the file name. |
 | `kind` | Coarse artifact category used for routing and later ingestion. |
 | `stage` | `source` for lineage roots, `derived` for artifacts produced from other registered artifacts. |
+| `status` | Operational state: `present`, `missing`, or `superseded`. It is not a scientific approval signal. |
 | `path` | Normalized repository-relative POSIX path to the artifact. |
 | `media_type` | MIME-style media type such as `application/pdf`, `text/markdown`, or `inode/directory`. |
 | `provenance` | Minimal producer and parent lineage information. |
 
-Optional fields provide display text, SHA-256 integrity, tags, and non-canonical metadata.
+Optional fields provide display text, SHA-256 integrity, tags, and non-canonical JSON metadata.
 
 ## Artifact kinds
 
@@ -80,6 +81,16 @@ Examples include experiment outputs, generated figures, converted text, AI-gener
 
 A derived artifact without parents is invalid because it breaks provenance. A source artifact with parents is invalid because it is not a lineage root.
 
+## Operational status
+
+`status` is intentionally narrow:
+
+- `present`: the artifact payload is expected to resolve at `path`;
+- `missing`: the manifest is retained, but the payload is currently unavailable at `path`;
+- `superseded`: the artifact is retained for provenance but is no longer the preferred current artifact.
+
+Status must never be interpreted as scientific confidence, claim approval, human review, novelty, or publication readiness. Those concepts belong to later typed scientific-state objects and human-gated workflows.
+
 ## Producer types
 
 `provenance.producer` records the immediate producer class:
@@ -101,14 +112,15 @@ Artifact paths must:
 - be normalized;
 - not start with `/` or `./`;
 - not contain `.` or `..` path segments;
-- not contain repeated separators.
+- not contain repeated separators;
+- not end in `/`, including for directory artifacts.
 
 Valid:
 
 ```text
 literature/sources/smith-2025.pdf
 experiments/exp001/results/metrics.json
-code/solver/
+code/solver
 ```
 
 Invalid:
@@ -118,10 +130,11 @@ Invalid:
 ../outside/data.csv
 ./notes/a.md
 literature//paper.pdf
+code/solver/
 C:\research\paper.pdf
 ```
 
-The contract allows both files and directories. Directory artifacts should use an appropriate media type such as `inode/directory`.
+The contract allows both files and directories. Directory artifacts use the normalized directory path without a trailing slash and an appropriate media type such as `inode/directory`.
 
 ## Integrity and Git provenance
 
@@ -133,7 +146,7 @@ The contract allows both files and directories. Directory artifacts should use a
 
 ## Metadata boundary
 
-`metadata` is an extensibility escape hatch for low-criticality JSON metadata. It must not become a shadow schema.
+`metadata` is an extensibility escape hatch for low-criticality **JSON-compatible** metadata. It must not become a shadow schema.
 
 Scientific state with durable semantics—authors, bibliographic identity, experiment parameters, claims, evidence relations, approval state, statistical results, journal constraints—must move into dedicated typed domain objects in the appropriate phase.
 
@@ -148,7 +161,8 @@ The Python validator additionally enforces:
 5. derived artifacts have at least one parent;
 6. optional text fields cannot be blank;
 7. checksums and Git revisions use normalized lowercase hexadecimal form;
-8. unknown top-level and provenance fields are rejected.
+8. metadata contains JSON-compatible values only;
+9. unknown top-level and provenance fields are rejected.
 
 ## Complete source example
 
@@ -158,6 +172,7 @@ The Python validator additionally enforces:
   "artifact_id": "art-smith-2025-paper",
   "kind": "paper",
   "stage": "source",
+  "status": "present",
   "path": "literature/sources/smith-2025.pdf",
   "media_type": "application/pdf",
   "title": "Example Reference Paper",
@@ -179,6 +194,7 @@ The Python validator additionally enforces:
   "artifact_id": "art-exp001-figure-convergence",
   "kind": "figure",
   "stage": "derived",
+  "status": "present",
   "path": "experiments/exp001/figures/convergence.pdf",
   "media_type": "application/pdf",
   "tags": ["experiment", "convergence"],
