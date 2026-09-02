@@ -9,12 +9,12 @@ New agents should read, in order:
 3. `docs/ARCHITECTURE.md`
 4. this file
 
-Detailed historical phase notes remain available in the Git history of this file. This compact form is authoritative for the current implementation state and next bounded task.
+Detailed historical phase notes remain available in Git history. This compact form is authoritative for the current implementation state and next bounded task.
 
 ## Current repository state — 2026-09-02
 
-**Active next phase:** Phase 3B — repository Claim/Evidence registry and graph audit  
-**Status:** READY  
+**Active phase:** Phase 3B — repository Claim/Evidence registry and graph audit  
+**Status:** IMPLEMENTED — PR #9 initial CI passed; latest-head/integration gates pending  
 **Default branch:** `main`
 
 ### Completed milestones
@@ -29,151 +29,107 @@ Detailed historical phase notes remain available in the Git history of this file
 | Phase 2A — ResearchQuestion/Hypothesis/Decision contracts | COMPLETE | PR #6 |
 | Phase 2B — repository research-state registry/audit | COMPLETE | PR #7 |
 | Phase 3A — Claim/Evidence governance contracts | COMPLETE | PR #8 |
-
-All completed phases above passed their PR CI and post-merge `main` CI gates.
-
-## Phase 3A — typed Claim/Evidence contracts
-
-**Branch:** `phase/3a-claim-evidence-contracts`  
-**Integration carrier:** PR #8  
-**Integrated main commit:** `e7f6e24fd1a7d4fee1092820c3f5e428fa322e9f`  
-**PR latest-head CI:** run `33632725357` — success  
-**Merged-main CI:** run `33632985211` — success
-
-**Status:** COMPLETE.
-
-### Implemented
-
-- added stable scientific identifiers:
-  - `clm-*` for `Claim`;
-  - `ev-*` for `Evidence`;
-  - `cel-*` for `ClaimEvidenceLink`;
-- added framework-neutral Draft 2020-12 contract in `schemas/claim-evidence.schema.json`;
-- added Python/Pydantic implementation in `src/article_maker/claim_evidence.py`;
-- added `Claim` lifecycle:
-  - `candidate`;
-  - `approved`;
-  - `rejected`;
-  - `superseded`;
-- candidate Claims may be proposed by human or agent;
-- every non-candidate Claim requires an explicit human `Decision` reference;
-- added `Evidence` as a provenance-bearing record with at least one canonical Artifact source and optional locator;
-- deliberately gave Evidence no approval lifecycle, separating recorded material from scientific interpretation;
-- added `ClaimEvidenceLink` with explicit relation:
-  - `supports`;
-  - `contradicts`;
-- added link lifecycle:
-  - `proposed`;
-  - `accepted`;
-  - `rejected`;
-  - `superseded`;
-- every non-proposed Claim-Evidence interpretation requires an explicit human `Decision` reference;
-- added Claim dependency references with duplicate/self-dependency rejection;
-- extended generic `DecisionSubjectType` with `claim` and `claim_evidence_link` while preserving `authority = human`;
-- preserved the Phase 2 registry boundary so Phase 3 Decisions are not misclassified as missing Hypothesis/ResearchQuestion subjects;
-- added Python and JSON Schema positive/negative contract tests;
-- added Phase 2 compatibility coverage;
-- documented the scientific-state contract in `docs/CLAIM_EVIDENCE.md`;
-- recorded the architecture decision in `docs/decisions/ADR-0007-claim-evidence-separation-and-governance.md`.
-
-### Phase 3A authority boundary
-
-Agents may:
-
-- propose candidate Claims;
-- record provenance-bearing Evidence;
-- propose that Evidence supports or contradicts a Claim;
-- explain the rationale for those proposals.
-
-Agents may not independently make canonical:
-
-- Claim approval/rejection/supersession;
-- acceptance/rejection/supersession of materially interpretive Claim-Evidence relations.
-
-Those remain human scientific authority gates represented by `Decision` records.
-
-### Phase 3A exit conditions
-
-- [x] framework-neutral Claim/Evidence/Link schema exists;
-- [x] Python validation implementation exists;
-- [x] Claim approval remains human-governed;
-- [x] Evidence provenance is explicit and separate from interpretation;
-- [x] support/contradiction is a first-class governed relation;
-- [x] Decision supports Claim/Link subjects without weakening human authority;
-- [x] Phase 2 audit remains compatible;
-- [x] positive/negative contract tests exist;
-- [x] documentation and ADR exist;
-- [x] bounded scope preserved;
-- [x] PR latest-head CI passes;
-- [x] PR #8 merged;
-- [x] merged `main` CI passes.
-
-### Non-goals preserved
-
-Phase 3A introduced no:
-
-- semantic Claim/Evidence extraction agent;
-- LLM provider or Agent Runtime;
-- embeddings, vector database, or RAG;
-- graph database as canonical state;
-- automated novelty judgment;
-- automated scientific approval;
-- manuscript generation;
-- experiment orchestration.
+| Phase 3B — repository Claim/Evidence registry/audit | INTEGRATION PENDING | PR #9 |
 
 ## Phase 3B — repository Claim/Evidence registry and graph audit
 
-**Status:** READY.
+**Branch:** `phase/3b-claim-evidence-registry`  
+**Integration carrier:** PR #9  
+**Initial PR CI:** run `33634840309` — success
 
 ### Objective
 
 Persist `Claim`, `Evidence`, and `ClaimEvidenceLink` records in deterministic repository locations and audit repository-level scientific graph integrity while preserving the Phase 3A human-authority boundary.
 
-### Required outputs
+### Implemented
 
-Phase 3B should add deterministic canonical locations, expected to align with the architecture layout:
+- added `ClaimEvidenceRegistry` in `src/article_maker/claim_registry.py`;
+- added canonical locations:
+  - `claims/<claim-id>.json`;
+  - `evidence/<evidence-id>.json`;
+  - `evidence/links/<link-id>.json`;
+- added typed save/load/list APIs for all three Phase 3 objects;
+- added deterministic UTF-8 JSON serialization with per-record atomic replacement;
+- added malformed-record-tolerant read-only graph audit;
+- resolved Claim -> ResearchQuestion references;
+- resolved optional Claim -> Hypothesis references and verified the Hypothesis belongs to the same ResearchQuestion;
+- resolved Claim -> dependent Claim references;
+- added repository-level Claim dependency cycle detection;
+- resolved Evidence -> Artifact provenance sources through the Phase 1 ArtifactRegistry;
+- resolved ClaimEvidenceLink -> Claim and Evidence endpoints;
+- resolved Claim/Link -> governing Decision references through `research/decisions/`;
+- verified governing Decision subject backlinks and Decision outcome -> lifecycle consistency;
+- audited Claim/Link Decision histories for missing predecessors, cross-subject predecessors, timestamp ordering, branches, cycles, ambiguous roots/heads, and stale governing references;
+- preserved simultaneous accepted `supports` and `contradicts` relations instead of suppressing either side;
+- added explicit graph audit severities:
+  - `error` for structural/governance integrity failures;
+  - `warning` for scientific gaps/conflicts that must not automatically override human decisions;
+- added warning `approved-claim-without-accepted-support`;
+- added warning `accepted-evidence-conflict`;
+- added warning `orphan-evidence`;
+- documented registry/audit semantics in `docs/CLAIM_EVIDENCE_REGISTRY.md`;
+- recorded durable design choices in `docs/decisions/ADR-0008-repository-claim-evidence-graph-audit.md`;
+- exported the registry API from `article_maker`;
+- added filesystem-backed tests for coherent graphs, persistence, missing cross-domain references, Hypothesis/Question mismatch, dependency cycles, scientific warnings, Decision outcome/history integrity, malformed-record tolerance, unsafe registry paths, and missing loads.
 
-```text
-claims/<claim-id>.json
-evidence/<evidence-id>.json
-evidence/links/<link-id>.json
-```
+### Scientific authority boundary
 
-The implementation should provide typed save/load/list operations and a malformed-record-tolerant read-only graph audit.
+The graph audit may report that an approved Claim lacks accepted support or has accepted contradictory Evidence. Those conditions are warnings, not automatic lifecycle mutations.
 
-### Required graph checks
+The audit must not:
 
-At minimum audit:
+- revoke or grant Claim approval;
+- accept or reject a ClaimEvidenceLink;
+- suppress inconvenient Evidence;
+- decide which side of conflicting Evidence is scientifically stronger;
+- infer novelty or manuscript suitability.
 
-- Claim -> ResearchQuestion existence;
-- optional Claim -> Hypothesis existence;
-- Claim Hypothesis belongs to the same ResearchQuestion;
-- Claim -> Claim dependency existence;
-- Claim dependency self-reference/cycles at repository level;
-- Evidence -> Artifact source existence;
-- ClaimEvidenceLink -> Claim existence;
-- ClaimEvidenceLink -> Evidence existence;
-- Claim/Link governing Decision existence;
-- governing Decision subject backlink;
-- Decision outcome -> Claim/Link lifecycle consistency;
-- Decision-history integrity for Claim/Link subjects;
-- accepted support/contradiction relations remain visible simultaneously rather than suppressing inconvenient evidence;
-- approved Claims expose whether accepted supporting evidence exists, without automatically approving/rejecting the Claim.
+Human `Decision` records remain authoritative for scientific transitions.
 
-### Explicit non-goals for Phase 3B
+### Validation and scope audit
 
-Do not introduce in this increment:
+- `main..phase/3b-claim-evidence-registry` is ahead-only and limited to registry runtime, exports, tests, documentation/ADR, and this handoff state;
+- initial PR #9 CI run `33634840309` completed successfully, including all existing Phase 1/2/3A tests and the new Phase 3B graph suite;
+- no semantic extraction, LLM provider, agent runtime, RAG/vector indexing, graph database as canonical state, confidence scoring, novelty judgment, manuscript generation, or experiment orchestration was introduced.
 
-- automatic parsing/extraction from PDF/PPT/literature;
-- LLM Provider abstraction;
-- Agent Runtime/orchestration;
-- semantic retrieval/vector indexing;
-- automatic evidence-strength/confidence scoring;
-- novelty assertions;
+### Phase 3B exit conditions
+
+- [x] deterministic Claim/Evidence/Link canonical locations exist;
+- [x] typed save/load/list APIs exist;
+- [x] malformed-record-tolerant read-only graph audit exists;
+- [x] Claim -> ResearchQuestion/Hypothesis consistency is audited;
+- [x] Claim dependency existence and cycles are audited;
+- [x] Evidence -> Artifact provenance resolution is audited;
+- [x] ClaimEvidenceLink endpoints are audited;
+- [x] Claim/Link Decision governance and history are audited;
+- [x] structural errors are distinct from scientific warnings;
+- [x] accepted supporting and contradicting Evidence remain simultaneously visible;
+- [x] approved Claims expose missing accepted support without automatic state mutation;
+- [x] material choices are recorded in ADR-0008;
+- [x] bounded-scope audit passes;
+- [x] initial PR CI passes;
+- [ ] latest-head PR CI passes after this canonical handoff update;
+- [ ] PR #9 merged and `main` push CI passes.
+
+## Next bounded increment — Phase 4A: typed literature and citation contracts
+
+**Status:** BLOCKED until Phase 3B integration is complete.
+
+### Objective
+
+Define framework-neutral canonical contracts for bibliographic `Citation` / literature-source metadata and structured paper notes that can later support literature extraction, citation integrity, prior-work comparison, and novelty analysis without yet introducing network search, semantic retrieval, LLM extraction, or automatic novelty assertions.
+
+### Expected boundary
+
+The Phase 4A contract should distinguish bibliographic identity/metadata from AI or human interpretation, preserve provenance back to registered literature Artifacts, and keep novelty claims outside automated authority.
+
+### Non-goals
+
+Do not introduce in Phase 4A:
+
+- live literature search/download clients;
+- LLM-based PDF parsing or summarization;
+- embeddings/vector search;
+- automatic novelty judgment;
 - manuscript generation;
-- experiment orchestration;
-- graph database as the sole canonical store.
-
-### Next bounded task
-
-Implement and review the **Phase 3B repository Claim/Evidence registry and read-only graph consistency audit**. Keep repository JSON records canonical and keep graph/database/index representations derived.
+- venue-specific writing behavior.
