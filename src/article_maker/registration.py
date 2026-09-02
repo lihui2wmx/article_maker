@@ -15,6 +15,7 @@ from .artifacts import (
     ArtifactStatus,
     ProducerType,
     Provenance,
+    validate_artifact_id,
     validate_repository_path,
 )
 
@@ -105,7 +106,7 @@ def sha256_file(path: Path, *, chunk_size: int = 1024 * 1024) -> str:
 
 
 def generated_artifact_id(repository_path: str) -> str:
-    """Generate a repository-scoped stable ID from the normalized initial path."""
+    """Generate a stable local artifact ID from the normalized initial repository path."""
 
     normalized = validate_repository_path(repository_path)
     payload = f"article-maker:artifact-path:v1:{normalized}".encode("utf-8")
@@ -116,22 +117,34 @@ class ArtifactRegistry:
     """Filesystem-backed registry for canonical ArtifactManifest JSON records."""
 
     def __init__(self, repository_root: Path | str, registry_path: str = DEFAULT_REGISTRY_PATH):
-        self.repository_root = Path(repository_root).resolve(strict=True)
+        try:
+            self.repository_root = Path(repository_root).resolve(strict=True)
+        except OSError as exc:
+            raise ArtifactPathError("repository_root must be an existing directory") from exc
         if not self.repository_root.is_dir():
             raise ArtifactPathError("repository_root must be an existing directory")
 
-        registry_path = validate_repository_path(registry_path)
-        self.registry_path = registry_path
-        self.registry_dir = self._resolve_repository_path(registry_path, require_exists=False)
+        self.registry_path = self._normalize_repository_path(registry_path)
+        self.registry_dir = self._resolve_repository_path(
+            self.registry_path, require_exists=False
+        )
 
-    def _resolve_repository_path(self, repository_path: str, *, require_exists: bool) -> Path:
+    @staticmethod
+    def _normalize_repository_path(repository_path: str) -> str:
         try:
-            normalized = validate_repository_path(repository_path)
+            return validate_repository_path(repository_path)
         except ValueError as exc:
             raise ArtifactPathError(str(exc)) from exc
 
+    def _resolve_repository_path(self, repository_path: str, *, require_exists: bool) -> Path:
+        normalized = self._normalize_repository_path(repository_path)
         candidate = self.repository_root.joinpath(*normalized.split("/"))
-        resolved = candidate.resolve(strict=require_exists)
+        try:
+            resolved = candidate.resolve(strict=require_exists)
+        except FileNotFoundError as exc:
+            raise ArtifactNotFoundError(
+                f"artifact path does not exist: {normalized}"
+            ) from exc
         try:
             resolved.relative_to(self.repository_root)
         except ValueError as exc:
@@ -139,6 +152,7 @@ class ArtifactRegistry:
         return resolved
 
     def _manifest_path(self, artifact_id: str) -> Path:
+        validate_artifact_id(artifact_id)
         return self.registry_dir / f"{artifact_id}.json"
 
     def _iter_manifest_paths(self) -> Iterable[Path]:
@@ -159,14 +173,18 @@ class ArtifactRegistry:
         ]
 
     def find_by_path(self, repository_path: str) -> ArtifactManifest | None:
-        normalized = validate_repository_path(repository_path)
+        normalized = self._normalize_repository_path(repository_path)
         for manifest in self.list():
             if manifest.path == normalized:
                 return manifest
         return None
 
     def _validate_parent_resolution(self, parent_artifacts: list[str]) -> None:
-        missing = [parent for parent in parent_artifacts if not self._manifest_path(parent).is_file()]
+        missing: list[str] = []
+        for parent in parent_artifacts:
+            manifest_path = self._manifest_path(parent)
+            if not manifest_path.is_file():
+                missing.append(parent)
         if missing:
             joined = ", ".join(missing)
             raise ParentArtifactNotFoundError(f"parent artifact manifests not found: {joined}")
@@ -216,12 +234,13 @@ class ArtifactRegistry:
     ) -> ArtifactManifest:
         """Register an existing repository file or directory and persist its manifest."""
 
-        normalized = validate_repository_path(repository_path)
+        normalized = self._normalize_repository_path(repository_path)
         filesystem_path = self._resolve_repository_path(normalized, require_exists=True)
         if not (filesystem_path.is_file() or filesystem_path.is_dir()):
             raise ArtifactPathError("artifact must resolve to a regular file or directory")
 
         artifact_id = artifact_id or generated_artifact_id(normalized)
+        validate_artifact_id(artifact_id)
         parents = list(parent_artifacts or [])
         self._validate_parent_resolution(parents)
 
@@ -268,9 +287,10 @@ class ArtifactRegistry:
         """Check registry manifests against current filesystem facts and parent resolution."""
 
         findings: list[AuditFinding] = []
-        known_ids = {manifest.artifact_id for manifest in self.list()}
+        manifests = self.list()
+        known_ids = {manifest.artifact_id for manifest in manifests}
 
-        for manifest in self.list():
+        for manifest in manifests:
             for parent in manifest.provenance.parent_artifacts:
                 if parent not in known_ids:
                     findings.append(
