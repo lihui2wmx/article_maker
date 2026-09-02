@@ -42,9 +42,10 @@ This is the canonical handoff log for implementation state. New agents should re
 
 ## 2026-09-02 — Phase 1A: typed artifact manifest specification
 
-**Branch:** `phase/1a-artifact-manifest`
+**Branch:** `phase/1a-artifact-manifest`  
+**Integration carrier:** PR #2
 
-**Status:** ACTIVE — implementation complete; PR/remote CI review pending.
+**Status:** COMPLETE — implementation, bounded-scope audit, and remote CI gate passed.
 
 ### Objective
 
@@ -63,12 +64,13 @@ Define the smallest canonical representation that can describe heterogeneous rep
 - added contract tests covering valid source/derived manifests and representative invalid cases;
 - added minimal GitHub Actions CI using official GitHub-hosted runner/actions.
 
-### Validation performed
+### Validation and audit
 
-- JSON Schema was checked against Draft 2020-12 meta-schema in an offline equivalent validation run;
-- representative valid source and derived manifests passed both schema and Pydantic validation;
+- JSON Schema was checked against the Draft 2020-12 meta-schema;
+- representative valid source and derived manifests passed schema and Pydantic validation;
 - representative invalid path, lineage, lifecycle, checksum, unknown-field, and non-JSON-metadata cases were rejected as intended;
-- direct container cloning of GitHub was unavailable because the execution container could not resolve `github.com`; remote GitHub Actions is the canonical execution check for this branch.
+- `main..phase/1a-artifact-manifest` was audited as ahead-only and limited to the artifact contract, validator, docs/ADR, tests, package metadata, development log, and minimal CI;
+- GitHub Actions run `33616177787` completed successfully; checkout, Python setup, install, and test steps all passed.
 
 ### Phase 1A exit conditions
 
@@ -79,13 +81,23 @@ Define the smallest canonical representation that can describe heterogeneous rep
 - [x] representative valid/invalid contract tests exist;
 - [x] material schema choices are recorded in an ADR;
 - [x] implementation remains independent of RAG, parsers, LLM providers, and agent frameworks;
-- [ ] pull request reviewed for bounded scope;
-- [ ] remote CI passes on the branch/PR.
+- [x] pull request audited for bounded scope;
+- [x] remote CI passes on the PR.
 
 ### Non-goals preserved
 
 No vector database, semantic RAG, PDF/PPT parser, LLM provider, multi-agent runtime, manuscript generator, claim/evidence graph, or automatic scientific interpretation was introduced.
 
-### Next bounded task
+## Ready next increment — Phase 1B: deterministic artifact registration and filesystem validation
 
-Open and audit the Phase 1A pull request. If CI passes and scope remains bounded, close Phase 1A and activate **Phase 1B: deterministic artifact registration and filesystem validation**. Phase 1B should register existing repository paths and compute/check deterministic metadata; it must still avoid semantic parsing and LLM interpretation.
+**Status:** READY after Phase 1A integration.
+
+### Objective
+
+Register existing repository artifacts deterministically from local paths and validate filesystem-level facts without interpreting scientific content.
+
+### Initial boundary
+
+Phase 1B may add deterministic path registration, file/directory existence checks, SHA-256 calculation for regular files, media-type inference with conservative fallbacks, manifest serialization/loading, and parent-ID resolution against a local registry.
+
+It must still avoid PDF/PPT semantic parsing, embeddings, RAG, LLM calls, scientific interpretation, claim/evidence extraction, and agent orchestration.
