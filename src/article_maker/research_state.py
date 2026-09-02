@@ -172,6 +172,7 @@ class Decision(BaseModel):
     decided_by: str
     decided_at: datetime
     rationale: str
+    previous_decision_id: str | None = None
     artifact_refs: list[str] = Field(default_factory=list)
     metadata: dict[str, JsonValue] = Field(default_factory=dict)
 
@@ -179,6 +180,13 @@ class Decision(BaseModel):
     @classmethod
     def validate_id(cls, value: str) -> str:
         return validate_decision_id(value)
+
+    @field_validator("previous_decision_id")
+    @classmethod
+    def validate_previous_decision_id(cls, value: str | None) -> str | None:
+        if value is not None:
+            return validate_decision_id(value)
+        return value
 
     @field_validator("decided_by", "rationale")
     @classmethod
@@ -203,9 +211,11 @@ class Decision(BaseModel):
         return normalized
 
     @model_validator(mode="after")
-    def validate_subject_id(self) -> Decision:
+    def validate_subject_and_history_ids(self) -> Decision:
         if self.subject_type is DecisionSubjectType.RESEARCH_QUESTION:
             validate_research_question_id(self.subject_id)
         elif self.subject_type is DecisionSubjectType.HYPOTHESIS:
             validate_hypothesis_id(self.subject_id)
+        if self.previous_decision_id == self.decision_id:
+            raise ValueError("a decision must not reference itself as previous_decision_id")
         return self
