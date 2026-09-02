@@ -13,8 +13,8 @@ Detailed historical phase notes remain available in Git history. This compact fo
 
 ## Current repository state — 2026-09-02
 
-**Active next phase:** Phase 4C — reviewed literature-to-Evidence proposal bridge  
-**Status:** READY  
+**Active phase:** Phase 4C — reviewed literature-to-Evidence proposal bridge  
+**Status:** IMPLEMENTED — PR #12 initial CI passed; latest-head/integration gates pending  
 **Default branch:** `main`
 
 ### Completed milestones
@@ -32,114 +32,117 @@ Detailed historical phase notes remain available in Git history. This compact fo
 | Phase 3B — repository Claim/Evidence registry/audit | COMPLETE | PR #9 |
 | Phase 4A — Literature/Citation contracts | COMPLETE | PR #10 |
 | Phase 4B — literature registry/citation-integrity audit | COMPLETE | PR #11 |
+| Phase 4C — reviewed literature-to-Evidence bridge | INTEGRATION PENDING | PR #12 |
 
-## Phase 4B — repository literature registry and citation-integrity audit
+## Phase 4C — reviewed literature-to-Evidence proposal bridge
 
-**Branch:** `phase/4b-literature-registry`  
-**Integration carrier:** PR #11  
-**Integrated main commit:** `a0a83637c11a0741d71cb2611f13db40cb2c2b32`  
-**Initial PR CI:** run `33637342522` — success  
-**Latest-head PR CI:** run `33637473946` — success  
-**Merged-main CI:** run `33637582537` — success
-
-**Status:** COMPLETE.
+**Branch:** `phase/4c-literature-evidence-bridge`  
+**Integration carrier:** PR #12  
+**Initial PR CI:** run `33638611346` — success
 
 ### Objective
 
-Persist `Citation` and `LiteratureNote` records in deterministic repository locations and audit bibliographic/provenance integrity without automatically merging works, selecting publication versions, promoting notes to Evidence, retrieving papers, or judging novelty.
+Provide a deterministic, reviewable bridge from eligible LiteratureNote `source_report` items to canonical `Evidence(kind=literature_statement)` without treating analyst interpretation as source fact or automatically creating scientific support/contradiction relationships.
 
 ### Implemented
 
-- added `LiteratureRegistry` in `src/article_maker/literature_registry.py`;
-- added canonical locations:
-  - `literature/metadata/<citation-id>.json`;
-  - `literature/notes/<literature-note-id>.json`;
-- added typed save/load/list APIs for Citation and LiteratureNote records;
-- added deterministic UTF-8 JSON serialization with per-record atomic replacement;
-- added malformed-record-tolerant read-only audit;
-- resolved Citation -> Artifact provenance references through the Phase 1 ArtifactRegistry;
-- resolved LiteratureNote -> Citation references;
-- resolved every note-item source Artifact;
-- required note-item source Artifacts to belong to the referenced Citation provenance set;
-- audited filename/ID mismatches and duplicate internal IDs;
-- classified duplicate case-insensitive `preferred_key` values as structural errors;
-- classified repeated external identifiers across Citations as warnings/review signals only;
-- classified same normalized title + issued-year groups as possible-duplicate-work warnings only;
-- deliberately retained all Citation records when duplicate-work warnings are present;
-- documented registry/audit semantics in `docs/LITERATURE_REGISTRY.md`;
-- recorded durable duplicate-signal choices in `docs/decisions/ADR-0010-literature-registry-and-duplicate-signals.md`;
-- exported the literature registry API from `article_maker`;
-- added filesystem-backed tests for clean persistence/audit, missing Artifact/Citation references, provenance-subset enforcement, preferred-key collisions, external-identifier warnings, title/year duplicate warnings, malformed-record tolerance, filename/ID mismatch, duplicate IDs, unsafe registry paths, and missing loads.
+- added `LiteratureEvidenceBridge` in `src/article_maker/literature_evidence.py`;
+- added explicit `LiteratureEvidenceSelection`, `PlannedLiteratureEvidence`, `LiteratureEvidencePlan`, and execution-result objects;
+- accepts only `LiteratureStatementType.SOURCE_REPORT` items;
+- rejects `analyst_interpretation` items as direct literature Evidence inputs;
+- creates deterministic dry-run Evidence previews with stable `ev-lit-*` IDs;
+- copies source-report text exactly into Evidence description;
+- copies Artifact IDs and locators exactly into Evidence sources;
+- preserves Citation ID, LiteratureNote ID, item index/kind/type, and item digest in `metadata.literature_bridge`;
+- verifies every source Artifact exists and belongs to the referenced Citation provenance set;
+- planning performs no canonical Evidence write;
+- hashes the complete plan with `literature_evidence_plan_digest()`;
+- execution requires the exact reviewed plan digest;
+- execution deep-snapshots the plan before validation;
+- stores Citation and LiteratureNote digests in the plan and rejects stale source records before persistence;
+- regenerates the expected Evidence from current source records and requires exact equality with the reviewed preview, preventing preview-text/provenance/metadata tampering;
+- rejects already-existing Evidence identities rather than overwriting canonical state;
+- persists exact reviewed previews through `ClaimEvidenceRegistry`;
+- reloads written Evidence and requires exact equality;
+- treats graph-audit errors for newly written Evidence as rollback conditions while allowing warning-only `orphan-evidence` state because Phase 4C deliberately creates no ClaimEvidenceLink;
+- provides best-effort in-process rollback for files newly created during a failed multi-entry execution;
+- exported the bridge API from `article_maker`;
+- documented behavior in `docs/LITERATURE_EVIDENCE_BRIDGE.md`;
+- recorded durable design choices in `docs/decisions/ADR-0011-reviewed-literature-evidence-promotion.md`;
+- added filesystem-backed tests for deterministic/no-write planning, source provenance, analyst-interpretation rejection, invalid selections, reviewed-digest enforcement, stale Note rejection, preview-tamper rejection, successful exact persistence, and existing-Evidence conflict protection.
 
-### Authority boundary
+### Scientific authority boundary
 
-Phase 4B audit is read-only. Duplicate-work signals do not prove bibliographic equivalence and therefore cannot mutate canonical Citation identity.
+Phase 4C creates provenance-bearing Evidence only. It does not decide what that Evidence means for any Claim.
 
-The audit must not:
+The bridge must not:
 
-- merge or delete Citation records;
-- select a preferred publication/preprint version;
-- rewrite external identifiers;
-- promote LiteratureNote items to Evidence;
-- create ClaimEvidenceLink records;
+- create or accept ClaimEvidenceLink records;
+- decide `supports` or `contradicts` relationships;
+- approve/reject/supersede Claims;
+- promote analyst interpretations as source-reported Evidence;
 - assert novelty;
-- fetch or semantically parse literature.
+- merge Citations;
+- fetch, parse, summarize, or embed literature;
+- invoke an LLM.
 
 ### Validation and scope audit
 
-- `main..phase/4b-literature-registry` was ahead-only and limited to registry runtime, exports, tests, documentation/ADR, and canonical handoff state;
-- initial PR #11 CI run `33637342522` completed successfully;
-- latest-head PR CI run `33637473946` completed successfully on `48ca15382c7b45197b023b49f46369d4b927f4f4`;
-- PR #11 was squash-merged into `main` at `a0a83637c11a0741d71cb2611f13db40cb2c2b32`;
-- merged-main CI run `33637582537` completed successfully;
-- all existing Phase 1–4A tests plus the new Phase 4B literature registry suite passed;
-- no live literature search/download client, semantic parser, LLM extraction/summarization, embeddings/RAG, automatic record merge, automatic note-to-Evidence promotion, novelty judgment, manuscript generation, or venue formatting was introduced.
+- `main..phase/4c-literature-evidence-bridge` is ahead-only and limited to bridge runtime, exports, tests, documentation/ADR, and this handoff state;
+- initial PR #12 CI run `33638611346` completed successfully, including all existing Phase 1–4B tests and the new Phase 4C suite;
+- no live literature retrieval, semantic parser, LLM extraction/summarization, embeddings/RAG, automatic ClaimEvidenceLink creation/acceptance, novelty judgment, manuscript generation, or venue formatting was introduced.
 
-### Phase 4B exit conditions
+### Phase 4C exit conditions
 
-- [x] deterministic Citation/Note canonical locations exist;
-- [x] typed save/load/list APIs exist;
-- [x] malformed-record-tolerant read-only audit exists;
-- [x] Citation -> Artifact provenance is audited;
-- [x] LiteratureNote -> Citation is audited;
-- [x] note Artifact existence and Citation-provenance membership are audited;
-- [x] preferred-key collisions are structural errors;
-- [x] external-identifier and title/year duplicate-work signals are warnings only;
-- [x] duplicate signals never auto-merge canonical records;
-- [x] filename/ID mismatch and duplicate internal IDs are audited;
-- [x] material choices are recorded in ADR-0010;
+- [x] source-report-only eligibility is enforced;
+- [x] deterministic dry-run Evidence projection exists;
+- [x] exact Artifact + locator provenance is preserved;
+- [x] Citation/LiteratureNote traceability metadata is preserved;
+- [x] planning writes no Evidence;
+- [x] reviewed digest is required for execution;
+- [x] stale Citation/LiteratureNote records are rejected;
+- [x] reviewed preview must be reproducible exactly from source records;
+- [x] existing Evidence identities cannot be overwritten;
+- [x] canonical Evidence is persisted only by explicit execution;
+- [x] post-write equality/audit checks exist;
+- [x] material choices are recorded in ADR-0011;
 - [x] bounded-scope audit passes;
-- [x] initial and latest-head PR CI pass;
-- [x] PR #11 merged and `main` push CI passes.
+- [x] initial PR CI passes;
+- [ ] latest-head PR CI passes after this handoff update;
+- [ ] PR #12 merged and `main` push CI passes.
 
-## Next bounded increment — Phase 4C: reviewed literature-to-Evidence proposal bridge
+## Next bounded increment — Phase 5A: typed Experiment provenance contracts
 
-**Status:** READY after Phase 4B integration.
+**Status:** BLOCKED until Phase 4C integration is complete.
 
 ### Objective
 
-Create a deterministic, reviewable bridge that can transform eligible `LiteratureNote` `source_report` items into proposed `Evidence(kind=literature_statement)` objects without writing Evidence automatically or interpreting analyst notes as source facts.
+Define the framework-neutral canonical contracts for reproducible Experiment identity, inputs/configuration, code/environment provenance, execution status, outputs, and run relationships without implementing a scheduler, remote runner, or scientific interpretation layer.
 
 ### Required boundary
 
-At minimum Phase 4C should:
+At minimum Phase 5A should define:
 
-- accept only `source_report` note items as eligible source material;
-- preserve exact Artifact + locator provenance;
-- preserve Citation and LiteratureNote identifiers in proposal metadata;
-- produce deterministic dry-run Evidence previews;
-- reject analyst interpretations as direct literature Evidence inputs;
-- detect stale literature records before execution or persistence;
-- require an explicit reviewed execution step before canonical Evidence write.
+- stable Experiment and ExperimentRun identities;
+- explicit input Artifact/config references;
+- code revision and execution-environment provenance;
+- deterministic parameter/config representation;
+- run lifecycle/status separated from scientific result quality;
+- output Artifact references;
+- rerun/reproduction lineage;
+- failure/partial-run representation;
+- framework-neutral JSON Schema plus Python validation;
+- representative positive/negative contract tests;
+- an ADR for identity/provenance choices that constrain later execution.
 
 ### Non-goals
 
-Do not introduce in Phase 4C:
+Do not introduce in Phase 5A:
 
-- live literature search/download clients;
-- PDF/PPT semantic parsing;
-- LLM summarization/extraction;
-- embeddings/vector retrieval;
-- automatic ClaimEvidenceLink creation or acceptance;
-- automatic novelty assertions;
-- manuscript generation or venue-specific formatting.
+- job scheduling or remote execution;
+- container orchestration;
+- cloud/HPC runners;
+- automated statistical interpretation;
+- automatic Evidence or Claim creation from experiment outputs;
+- LLM/agent runtime orchestration;
+- manuscript generation.
