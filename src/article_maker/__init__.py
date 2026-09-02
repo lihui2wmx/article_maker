@@ -46,6 +46,12 @@ from .registration import (
     infer_media_type,
     sha256_file,
 )
+from .research_registry import (
+    ResearchStateAuditFinding,
+    ResearchStateNotFoundError,
+    ResearchStateRegistry,
+    ResearchStateRegistryError,
+)
 from .research_state import (
     Decision,
     DecisionOutcome,
@@ -98,6 +104,10 @@ __all__ = [
     "RegistrationPlanError",
     "RegistrationSelection",
     "ResearchQuestion",
+    "ResearchStateAuditFinding",
+    "ResearchStateNotFoundError",
+    "ResearchStateRegistry",
+    "ResearchStateRegistryError",
     "ResearchStateStatus",
     "SameBatchLineageError",
     "StalePlanError",

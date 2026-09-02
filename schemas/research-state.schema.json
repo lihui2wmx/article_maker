@@ -61,10 +61,7 @@
       "properties": {
         "schema_version": {"const": "1.0"},
         "research_question_id": {"$ref": "#/$defs/research_question_id"},
-        "question": {
-          "type": "string",
-          "pattern": ".*\\S.*"
-        },
+        "question": {"type": "string", "pattern": ".*\\S.*"},
         "status": {"$ref": "#/$defs/governed_status"},
         "proposed_by": {"$ref": "#/$defs/proposal_attribution"},
         "governing_decision_id": {
@@ -83,15 +80,11 @@
             "required": ["status"]
           },
           "then": {
-            "properties": {
-              "governing_decision_id": {"type": "null"}
-            }
+            "properties": {"governing_decision_id": {"type": "null"}}
           },
           "else": {
             "required": ["governing_decision_id"],
-            "properties": {
-              "governing_decision_id": {"$ref": "#/$defs/decision_id"}
-            }
+            "properties": {"governing_decision_id": {"$ref": "#/$defs/decision_id"}}
           }
         }
       ]
@@ -111,10 +104,7 @@
         "schema_version": {"const": "1.0"},
         "hypothesis_id": {"$ref": "#/$defs/hypothesis_id"},
         "research_question_id": {"$ref": "#/$defs/research_question_id"},
-        "statement": {
-          "type": "string",
-          "pattern": ".*\\S.*"
-        },
+        "statement": {"type": "string", "pattern": ".*\\S.*"},
         "status": {"$ref": "#/$defs/governed_status"},
         "proposed_by": {"$ref": "#/$defs/proposal_attribution"},
         "governing_decision_id": {
@@ -133,15 +123,11 @@
             "required": ["status"]
           },
           "then": {
-            "properties": {
-              "governing_decision_id": {"type": "null"}
-            }
+            "properties": {"governing_decision_id": {"type": "null"}}
           },
           "else": {
             "required": ["governing_decision_id"],
-            "properties": {
-              "governing_decision_id": {"$ref": "#/$defs/decision_id"}
-            }
+            "properties": {"governing_decision_id": {"$ref": "#/$defs/decision_id"}}
           }
         }
       ]
@@ -167,17 +153,14 @@
         "subject_id": {"type": "string"},
         "outcome": {"enum": ["approve", "reject", "supersede"]},
         "authority": {"const": "human"},
-        "decided_by": {
-          "type": "string",
-          "pattern": ".*\\S.*"
-        },
-        "decided_at": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "rationale": {
-          "type": "string",
-          "pattern": ".*\\S.*"
+        "decided_by": {"type": "string", "pattern": ".*\\S.*"},
+        "decided_at": {"type": "string", "format": "date-time"},
+        "rationale": {"type": "string", "pattern": ".*\\S.*"},
+        "previous_decision_id": {
+          "oneOf": [
+            {"$ref": "#/$defs/decision_id"},
+            {"type": "null"}
+          ]
         },
         "artifact_refs": {"$ref": "#/$defs/artifact_refs"},
         "metadata": {"$ref": "#/$defs/metadata"}
@@ -189,14 +172,10 @@
             "required": ["subject_type"]
           },
           "then": {
-            "properties": {
-              "subject_id": {"$ref": "#/$defs/research_question_id"}
-            }
+            "properties": {"subject_id": {"$ref": "#/$defs/research_question_id"}}
           },
           "else": {
-            "properties": {
-              "subject_id": {"$ref": "#/$defs/hypothesis_id"}
-            }
+            "properties": {"subject_id": {"$ref": "#/$defs/hypothesis_id"}}
           }
         }
       ]
