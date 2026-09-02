@@ -284,9 +284,10 @@ No content parsing, PDF/PPT extraction, embeddings, RAG, vector database, LLM pr
 ## 2026-09-02 — Phase 2A: research-state contracts
 
 **Branch:** `phase/2a-research-state-contracts`  
-**Integration carrier:** PR #6
+**Integration carrier:** PR #6  
+**Integrated main commit:** `64b1afca6c7dd03c8819cfeea336d8eb627f442e`
 
-**Status:** COMPLETE at implementation/review boundary — bounded-scope audit and initial PR CI passed; integration pending.
+**Status:** COMPLETE — bounded-scope audit, latest-head PR CI, merge, and main push CI all passed.
 
 ### Objective
 
@@ -312,7 +313,9 @@ Define framework-neutral, human-auditable contracts for `ResearchQuestion`, `Hyp
 ### Validation and audit
 
 - `main..phase/2a-research-state-contracts` was audited as ahead-only and limited to research-state schema/runtime contracts, package exports, tests, documentation/ADR, and development state;
-- PR #6 CI run `33622917667` completed successfully on initial head `059be39ac40cf8a9db9410472df2f7cdb871adac`;
+- PR #6 CI runs `33622917667` and `33623125475` completed successfully, including latest head `d09024f42f172094ce975057f2743f5bd6982b4d`;
+- PR #6 was squash-merged into `main` at `64b1afca6c7dd03c8819cfeea336d8eb627f442e`;
+- main push CI run `33623196691` completed successfully;
 - existing Phase 1 suites plus the new research-state contract suite passed.
 
 ### Phase 2A exit conditions
@@ -327,9 +330,8 @@ Define framework-neutral, human-auditable contracts for `ResearchQuestion`, `Hyp
 - [x] object-level versus repository-level validation boundary is documented;
 - [x] material governance choices are recorded in ADR-0005;
 - [x] bounded-scope audit passes;
-- [x] initial remote PR CI passes;
-- [ ] latest-head PR CI passes after development-log update;
-- [ ] PR #6 merged and main push CI passes.
+- [x] latest-head remote PR CI passes;
+- [x] PR #6 merged and main push CI passes.
 
 ### Explicitly deferred to Phase 2B
 
@@ -345,9 +347,9 @@ Define framework-neutral, human-auditable contracts for `ResearchQuestion`, `Hyp
 
 No Claim/Evidence objects, claim approval, semantic parsing, LLM provider, agent orchestration, automatic research-direction approval, external identity/authentication system, experiment orchestration, or manuscript generation was introduced.
 
-## Ready next increment after Phase 2A integration — Phase 2B: repository-level research-state registry and consistency audit
+## Ready next increment — Phase 2B: repository-level research-state registry and consistency audit
 
-**Status:** BLOCKED on Phase 2A integration.
+**Status:** READY after Phase 2A integration.
 
 ### Objective
 
