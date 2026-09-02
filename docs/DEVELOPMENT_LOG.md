@@ -6,7 +6,7 @@ This is the canonical handoff log for implementation state. New agents should re
 
 **Branch:** `phase/0-repository-foundation`
 
-**Status:** COMPLETE — foundation audit passed.
+**Status:** COMPLETE — foundation audit passed and PR #1 merged to `main`.
 
 ### Completed in this increment
 
@@ -36,33 +36,56 @@ This is the canonical handoff log for implementation state. New agents should re
 
 ### Deferred decisions
 
-- no application/runtime code exists yet;
-- no schemas exist yet;
-- no artifact-ingestion pipeline exists yet;
 - no LLM provider or agent framework has been selected or implemented;
 - no license has been selected in repository state;
 - the repository intentionally contains no empty domain directories until the corresponding phase activates.
 
-## Active next increment — Phase 1A: typed artifact manifest specification
+## 2026-09-02 — Phase 1A: typed artifact manifest specification
 
-**Status:** READY
+**Branch:** `phase/1a-artifact-manifest`
+
+**Status:** ACTIVE — implementation complete; PR/remote CI review pending.
 
 ### Objective
 
-Define the smallest canonical representation that can describe heterogeneous repository research material without parsing or embedding it yet.
+Define the smallest canonical representation that can describe heterogeneous repository research material without parsing, embedding, or scientifically interpreting it.
 
-### Required outputs
+### Implemented
 
-- an `Artifact` schema with stable identity, artifact kind, repository path, media/format metadata, provenance, lifecycle/status, and optional human description;
-- explicit distinction between source artifacts and generated/derived artifacts;
-- validation rules that prevent paths outside the repository and ambiguous provenance;
-- representative valid/invalid fixtures or examples sufficient to review the contract;
-- a short decision record for any schema choice that materially constrains later ingestion.
+- added `schemas/artifact-manifest.schema.json` as the framework-neutral JSON Schema Draft 2020-12 contract;
+- added Pydantic models in `src/article_maker/artifacts.py` for enforceable Python validation;
+- introduced stable artifact IDs, coarse artifact kinds, explicit source/derived stage, operational lifecycle status, normalized repository paths, media type, optional SHA-256, tags, provenance, and JSON-only metadata;
+- enforced source artifacts as lineage roots and required parent lineage for derived artifacts;
+- rejected absolute/traversing/non-normalized paths, duplicate parents, self-parent references, malformed hashes/revisions, blank optional text, and unknown structural fields;
+- explicitly separated operational status (`present`, `missing`, `superseded`) from scientific approval/confidence;
+- documented the contract in `docs/ARTIFACT_MANIFEST.md`;
+- recorded the durable schema decisions in `docs/decisions/ADR-0001-artifact-manifest-v1.md`;
+- added contract tests covering valid source/derived manifests and representative invalid cases;
+- added minimal GitHub Actions CI using official GitHub-hosted runner/actions.
 
-### Non-goals for Phase 1A
+### Validation performed
 
-Do not add vector databases, semantic RAG, PDF/PPT parsing, LLM providers, multi-agent runtimes, manuscript generation, claim/evidence graphs, or automatic scientific interpretation in this increment.
+- JSON Schema was checked against Draft 2020-12 meta-schema in an offline equivalent validation run;
+- representative valid source and derived manifests passed both schema and Pydantic validation;
+- representative invalid path, lineage, lifecycle, checksum, unknown-field, and non-JSON-metadata cases were rejected as intended;
+- direct container cloning of GitHub was unavailable because the execution container could not resolve `github.com`; remote GitHub Actions is the canonical execution check for this branch.
+
+### Phase 1A exit conditions
+
+- [x] stable typed Artifact contract exists;
+- [x] source vs derived provenance is explicit;
+- [x] repository path escape/non-normalization is rejected;
+- [x] operational lifecycle/status is explicit and scientifically non-authoritative;
+- [x] representative valid/invalid contract tests exist;
+- [x] material schema choices are recorded in an ADR;
+- [x] implementation remains independent of RAG, parsers, LLM providers, and agent frameworks;
+- [ ] pull request reviewed for bounded scope;
+- [ ] remote CI passes on the branch/PR.
+
+### Non-goals preserved
+
+No vector database, semantic RAG, PDF/PPT parser, LLM provider, multi-agent runtime, manuscript generator, claim/evidence graph, or automatic scientific interpretation was introduced.
 
 ### Next bounded task
 
-Implement and review the Phase 1A artifact-manifest contract. Prefer a framework-neutral schema first; introduce Python/Pydantic runtime code only if it adds enforceable validation that JSON Schema alone cannot express cleanly.
+Open and audit the Phase 1A pull request. If CI passes and scope remains bounded, close Phase 1A and activate **Phase 1B: deterministic artifact registration and filesystem validation**. Phase 1B should register existing repository paths and compute/check deterministic metadata; it must still avoid semantic parsing and LLM interpretation.
