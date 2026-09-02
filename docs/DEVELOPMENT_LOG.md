@@ -13,8 +13,8 @@ Detailed historical phase notes remain available in Git history. This compact fo
 
 ## Current repository state — 2026-09-02
 
-**Active phase:** Phase 4C — reviewed literature-to-Evidence proposal bridge  
-**Status:** IMPLEMENTED — PR #12 initial CI passed; latest-head/integration gates pending  
+**Active next phase:** Phase 5A — typed Experiment provenance contracts  
+**Status:** READY  
 **Default branch:** `main`
 
 ### Completed milestones
@@ -32,107 +32,60 @@ Detailed historical phase notes remain available in Git history. This compact fo
 | Phase 3B — repository Claim/Evidence registry/audit | COMPLETE | PR #9 |
 | Phase 4A — Literature/Citation contracts | COMPLETE | PR #10 |
 | Phase 4B — literature registry/citation-integrity audit | COMPLETE | PR #11 |
-| Phase 4C — reviewed literature-to-Evidence bridge | INTEGRATION PENDING | PR #12 |
+| Phase 4C — reviewed literature-to-Evidence bridge | COMPLETE | PR #12 |
 
-## Phase 4C — reviewed literature-to-Evidence proposal bridge
+## Phase 4C closure
 
 **Branch:** `phase/4c-literature-evidence-bridge`  
 **Integration carrier:** PR #12  
-**Initial PR CI:** run `33638611346` — success
+**Initial PR CI:** `33638611346` — success  
+**Latest-head PR CI:** `33638732212` — success  
+**Integrated main commit:** `ffe4c5d8764f3504abf9af47927470a44bc7e2ef`  
+**Merged-main CI:** `33638830523` — success
 
-### Objective
+Phase 4C added a deterministic reviewed bridge from LiteratureNote `source_report` items to `Evidence(kind=literature_statement)` with:
 
-Provide a deterministic, reviewable bridge from eligible LiteratureNote `source_report` items to canonical `Evidence(kind=literature_statement)` without treating analyst interpretation as source fact or automatically creating scientific support/contradiction relationships.
+- exact source text and Artifact+locator provenance preservation;
+- deterministic `ev-lit-*` identity and complete dry-run previews;
+- Citation/LiteratureNote/item traceability metadata;
+- `analyst_interpretation` rejection as direct literature Evidence;
+- exact reviewed-plan digest binding;
+- stale Citation/LiteratureNote rejection;
+- deterministic preview regeneration to reject tampering;
+- explicit execution only, with no Evidence write during planning;
+- existing-Evidence conflict rejection;
+- post-write equality and graph-audit checks;
+- best-effort in-process rollback for newly written files.
 
-### Implemented
+Scientific interpretation remains separate: Phase 4C does not create or accept ClaimEvidenceLink records, decide support/contradiction, approve Claims, assert novelty, retrieve/parse literature, or invoke an LLM.
 
-- added `LiteratureEvidenceBridge` in `src/article_maker/literature_evidence.py`;
-- added explicit `LiteratureEvidenceSelection`, `PlannedLiteratureEvidence`, `LiteratureEvidencePlan`, and execution-result objects;
-- accepts only `LiteratureStatementType.SOURCE_REPORT` items;
-- rejects `analyst_interpretation` items as direct literature Evidence inputs;
-- creates deterministic dry-run Evidence previews with stable `ev-lit-*` IDs;
-- copies source-report text exactly into Evidence description;
-- copies Artifact IDs and locators exactly into Evidence sources;
-- preserves Citation ID, LiteratureNote ID, item index/kind/type, and item digest in `metadata.literature_bridge`;
-- verifies every source Artifact exists and belongs to the referenced Citation provenance set;
-- planning performs no canonical Evidence write;
-- hashes the complete plan with `literature_evidence_plan_digest()`;
-- execution requires the exact reviewed plan digest;
-- execution deep-snapshots the plan before validation;
-- stores Citation and LiteratureNote digests in the plan and rejects stale source records before persistence;
-- regenerates the expected Evidence from current source records and requires exact equality with the reviewed preview, preventing preview-text/provenance/metadata tampering;
-- rejects already-existing Evidence identities rather than overwriting canonical state;
-- persists exact reviewed previews through `ClaimEvidenceRegistry`;
-- reloads written Evidence and requires exact equality;
-- treats graph-audit errors for newly written Evidence as rollback conditions while allowing warning-only `orphan-evidence` state because Phase 4C deliberately creates no ClaimEvidenceLink;
-- provides best-effort in-process rollback for files newly created during a failed multi-entry execution;
-- exported the bridge API from `article_maker`;
-- documented behavior in `docs/LITERATURE_EVIDENCE_BRIDGE.md`;
-- recorded durable design choices in `docs/decisions/ADR-0011-reviewed-literature-evidence-promotion.md`;
-- added filesystem-backed tests for deterministic/no-write planning, source provenance, analyst-interpretation rejection, invalid selections, reviewed-digest enforcement, stale Note rejection, preview-tamper rejection, successful exact persistence, and existing-Evidence conflict protection.
+Documentation:
 
-### Scientific authority boundary
-
-Phase 4C creates provenance-bearing Evidence only. It does not decide what that Evidence means for any Claim.
-
-The bridge must not:
-
-- create or accept ClaimEvidenceLink records;
-- decide `supports` or `contradicts` relationships;
-- approve/reject/supersede Claims;
-- promote analyst interpretations as source-reported Evidence;
-- assert novelty;
-- merge Citations;
-- fetch, parse, summarize, or embed literature;
-- invoke an LLM.
-
-### Validation and scope audit
-
-- `main..phase/4c-literature-evidence-bridge` is ahead-only and limited to bridge runtime, exports, tests, documentation/ADR, and this handoff state;
-- initial PR #12 CI run `33638611346` completed successfully, including all existing Phase 1–4B tests and the new Phase 4C suite;
-- no live literature retrieval, semantic parser, LLM extraction/summarization, embeddings/RAG, automatic ClaimEvidenceLink creation/acceptance, novelty judgment, manuscript generation, or venue formatting was introduced.
-
-### Phase 4C exit conditions
-
-- [x] source-report-only eligibility is enforced;
-- [x] deterministic dry-run Evidence projection exists;
-- [x] exact Artifact + locator provenance is preserved;
-- [x] Citation/LiteratureNote traceability metadata is preserved;
-- [x] planning writes no Evidence;
-- [x] reviewed digest is required for execution;
-- [x] stale Citation/LiteratureNote records are rejected;
-- [x] reviewed preview must be reproducible exactly from source records;
-- [x] existing Evidence identities cannot be overwritten;
-- [x] canonical Evidence is persisted only by explicit execution;
-- [x] post-write equality/audit checks exist;
-- [x] material choices are recorded in ADR-0011;
-- [x] bounded-scope audit passes;
-- [x] initial PR CI passes;
-- [ ] latest-head PR CI passes after this handoff update;
-- [ ] PR #12 merged and `main` push CI passes.
+- `docs/LITERATURE_EVIDENCE_BRIDGE.md`
+- `docs/decisions/ADR-0011-reviewed-literature-evidence-promotion.md`
 
 ## Next bounded increment — Phase 5A: typed Experiment provenance contracts
 
-**Status:** BLOCKED until Phase 4C integration is complete.
+**Status:** READY.
 
 ### Objective
 
-Define the framework-neutral canonical contracts for reproducible Experiment identity, inputs/configuration, code/environment provenance, execution status, outputs, and run relationships without implementing a scheduler, remote runner, or scientific interpretation layer.
+Define framework-neutral canonical contracts for reproducible Experiment identity, intended configuration, individual run provenance, execution status, inputs, outputs, and rerun/reproduction relationships without implementing a scheduler or interpreting experimental results scientifically.
 
-### Required boundary
+### Required outputs
 
-At minimum Phase 5A should define:
+At minimum define:
 
-- stable Experiment and ExperimentRun identities;
+- stable `Experiment` and `ExperimentRun` identities;
 - explicit input Artifact/config references;
-- code revision and execution-environment provenance;
 - deterministic parameter/config representation;
+- code revision and execution-environment provenance;
 - run lifecycle/status separated from scientific result quality;
 - output Artifact references;
 - rerun/reproduction lineage;
-- failure/partial-run representation;
+- failure and partial-run representation;
 - framework-neutral JSON Schema plus Python validation;
-- representative positive/negative contract tests;
+- representative valid/invalid tests;
 - an ADR for identity/provenance choices that constrain later execution.
 
 ### Non-goals
@@ -142,7 +95,7 @@ Do not introduce in Phase 5A:
 - job scheduling or remote execution;
 - container orchestration;
 - cloud/HPC runners;
-- automated statistical interpretation;
+- automatic statistical/scientific interpretation;
 - automatic Evidence or Claim creation from experiment outputs;
 - LLM/agent runtime orchestration;
 - manuscript generation.
