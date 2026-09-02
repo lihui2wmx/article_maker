@@ -350,9 +350,10 @@ No Claim/Evidence objects, claim approval, semantic parsing, LLM provider, agent
 ## 2026-09-02 — Phase 2B: repository-level research-state registry and consistency audit
 
 **Branch:** `phase/2b-research-state-registry`  
-**Integration carrier:** PR #7
+**Integration carrier:** PR #7  
+**Integrated main commit:** `767c46dce9aaddd5af58924d124801d55d66e5a2`
 
-**Status:** COMPLETE at implementation/review boundary — bounded-scope audit and initial PR CI passed; integration pending.
+**Status:** COMPLETE — bounded-scope audit, latest-head PR CI, merge, and main push CI all passed.
 
 ### Objective
 
@@ -379,7 +380,9 @@ Persist ResearchQuestion, Hypothesis, and Decision records in deterministic repo
 ### Validation and audit
 
 - `main..phase/2b-research-state-registry` was audited as ahead-only and limited to the registry/audit runtime, backward-compatible Decision-history contract extension, package exports, tests, documentation/ADR, and development state;
-- PR #7 CI run `33624958368` completed successfully on implementation head `f38cf24367ea9ae4a12afe174efee45ec6ec55d7`;
+- PR #7 CI runs `33624958368` and `33625213622` completed successfully, including latest head `c5cb276aee961e70291c9431174cded633c1ff89`;
+- PR #7 was squash-merged into `main` at `767c46dce9aaddd5af58924d124801d55d66e5a2`;
+- main push CI run `33625290304` completed successfully;
 - existing Phase 1 and Phase 2A suites plus the new repository-level research-state suite passed.
 
 ### Phase 2B exit conditions
@@ -396,9 +399,8 @@ Persist ResearchQuestion, Hypothesis, and Decision records in deterministic repo
 - [x] current governed state must explicitly reference the unique Decision-history head;
 - [x] material design decisions are recorded in ADR-0006;
 - [x] bounded-scope audit passes;
-- [x] initial PR CI passes;
-- [ ] latest-head PR CI passes after development-log update;
-- [ ] PR #7 merged and main push CI passes.
+- [x] latest-head PR CI passes;
+- [x] PR #7 merged and main push CI passes.
 
 ### Transaction and authority boundary
 
@@ -408,9 +410,9 @@ Phase 2B provides per-record atomic writes and repository-level consistency audi
 
 No Claim/Evidence objects, semantic extraction, LLM provider, agent runtime, automatic approval, experiment orchestration, database-backed canonical state, or manuscript generation was introduced.
 
-## Ready next increment after Phase 2B integration — Phase 3A: typed Claim/Evidence contracts
+## Ready next increment — Phase 3A: typed Claim/Evidence contracts
 
-**Status:** BLOCKED on Phase 2B integration.
+**Status:** READY after Phase 2B integration.
 
 ### Objective
 
