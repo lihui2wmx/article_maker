@@ -63,6 +63,13 @@ from .literature import (
     LiteratureStatementType,
     LiteratureWorkType,
 )
+from .literature_registry import (
+    LiteratureAuditFinding,
+    LiteratureAuditSeverity,
+    LiteratureNotFoundError,
+    LiteratureRegistry,
+    LiteratureRegistryError,
+)
 from .registration import (
     ArtifactConflictError,
     ArtifactNotFoundError,
@@ -146,9 +153,14 @@ __all__ = [
     "GraphAuditSeverity",
     "Hypothesis",
     "IdentifierScheme",
+    "LiteratureAuditFinding",
+    "LiteratureAuditSeverity",
+    "LiteratureNotFoundError",
     "LiteratureNote",
     "LiteratureNoteItem",
     "LiteratureNoteKind",
+    "LiteratureRegistry",
+    "LiteratureRegistryError",
     "LiteratureSourceRef",
     "LiteratureStatementType",
     "LiteratureWorkType",
