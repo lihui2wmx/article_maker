@@ -51,6 +51,18 @@ from .execution import (
     StalePlanError,
     batch_plan_digest,
 )
+from .literature import (
+    BibliographicAuthor,
+    Citation,
+    CitationIdentifier,
+    IdentifierScheme,
+    LiteratureNote,
+    LiteratureNoteItem,
+    LiteratureNoteKind,
+    LiteratureSourceRef,
+    LiteratureStatementType,
+    LiteratureWorkType,
+)
 from .registration import (
     ArtifactConflictError,
     ArtifactNotFoundError,
@@ -83,9 +95,11 @@ from .research_state import (
     validate_research_question_id,
 )
 from .scientific_ids import (
+    validate_citation_id,
     validate_claim_evidence_link_id,
     validate_claim_id,
     validate_evidence_id,
+    validate_literature_note_id,
 )
 
 __all__ = [
@@ -107,6 +121,9 @@ __all__ = [
     "BatchPreflightError",
     "BatchRegistrationPlan",
     "BatchRollbackError",
+    "BibliographicAuthor",
+    "Citation",
+    "CitationIdentifier",
     "Claim",
     "ClaimEvidenceAuditFinding",
     "ClaimEvidenceLink",
@@ -128,6 +145,13 @@ __all__ = [
     "EvidenceSourceRef",
     "GraphAuditSeverity",
     "Hypothesis",
+    "IdentifierScheme",
+    "LiteratureNote",
+    "LiteratureNoteItem",
+    "LiteratureNoteKind",
+    "LiteratureSourceRef",
+    "LiteratureStatementType",
+    "LiteratureWorkType",
     "ParentArtifactNotFoundError",
     "PlannedRegistration",
     "PostWriteAuditError",
@@ -151,11 +175,13 @@ __all__ = [
     "infer_media_type",
     "sha256_file",
     "validate_artifact_id",
+    "validate_citation_id",
     "validate_claim_evidence_link_id",
     "validate_claim_id",
     "validate_decision_id",
     "validate_evidence_id",
     "validate_hypothesis_id",
+    "validate_literature_note_id",
     "validate_repository_path",
     "validate_research_question_id",
 ]
