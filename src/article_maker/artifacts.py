@@ -37,6 +37,12 @@ class ArtifactStage(StrEnum):
     DERIVED = "derived"
 
 
+class ArtifactStatus(StrEnum):
+    PRESENT = "present"
+    MISSING = "missing"
+    SUPERSEDED = "superseded"
+
+
 class ProducerType(StrEnum):
     EXTERNAL = "external"
     HUMAN = "human"
@@ -96,6 +102,7 @@ class ArtifactManifest(BaseModel):
     artifact_id: str
     kind: ArtifactKind
     stage: ArtifactStage
+    status: ArtifactStatus
     path: str
     media_type: str
     title: str | None = None
