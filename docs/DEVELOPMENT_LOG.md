@@ -146,21 +146,75 @@ No PDF/PPT semantic parser, embedding model, vector database, RAG layer, LLM pro
 ### Deferred within artifact ingestion
 
 - recursive directory hashing;
-- bulk filesystem discovery/ignore policy;
 - command-line registration UX;
 - controlled path move/rebind while preserving identity;
 - automatic operational status transitions.
 
-## Ready next increment — Phase 1C: bounded artifact discovery and batch registration
+## 2026-09-02 — Phase 1C: bounded artifact discovery and dry-run batch planning
 
-**Status:** READY after Phase 1B integration.
+**Branch:** `phase/1c-artifact-discovery`
+
+**Status:** ACTIVE — implementation and bounded design complete; remote CI/integration pending.
 
 ### Objective
 
-Make the repository-drop workflow convenient by discovering candidate research artifacts under explicit roots and producing a reviewable batch-registration plan, while preserving explicit kind/producer decisions and avoiding semantic parsing.
+Make the repository-drop workflow convenient by discovering candidate research files under explicit roots, comparing them with canonical registry state, and producing exact reviewable manifest previews without semantic parsing or bulk mutation.
 
-### Initial boundary
+### Implemented
 
-Phase 1C should define deterministic discovery roots, ignore rules, registered/unregistered comparison, and a dry-run registration plan before adding any automatic bulk mutation. A minimal CLI may be added only as a thin interface over tested domain APIs.
+- added `DiscoveryPolicy` requiring one or more explicit normalized roots and rejecting unbounded `.` scans;
+- added deterministic ignored-directory names and transient-file glob rules;
+- excluded the active registry manifest directory independently of user ignore configuration;
+- avoided symbolic-link roots, symbolic-link directories, and symbolic-link files to prevent alias/containment ambiguity;
+- added deterministic sorted/deduplicated discovery across overlapping roots;
+- added `DiscoveredArtifact` with operational states `unregistered`, `registered`, and `changed`;
+- computed current deterministic MIME type and SHA-256 for discovered regular files;
+- compared registered candidates against stored filesystem facts without silently refreshing drift;
+- added explicit `RegistrationSelection` for kind/producer/stage/lineage and descriptive provenance semantics;
+- added no-write `BatchRegistrationPlan` generation;
+- made every planned action contain a complete validated `ArtifactManifest` preview using current filesystem facts;
+- rejected undiscovered paths, registered paths, changed paths, duplicate selections, unavailable parents, duplicate/plausibly colliding IDs, and invalid manifest semantics before any write;
+- documented discovery/planning semantics in `docs/ARTIFACT_DISCOVERY.md`;
+- recorded durable bounded-discovery choices in `docs/decisions/ADR-0003-bounded-artifact-discovery.md`;
+- added filesystem-backed tests covering roots, ignores, ordering/deduplication, registry exclusion, registered/changed states, symlink behavior, exact dry-run manifests, parent resolution, collision handling, and invalid semantic inputs.
 
-It must still avoid content parsing, embeddings, RAG, LLM calls, scientific interpretation, claim/evidence extraction, and agent orchestration.
+### Phase 1C exit conditions
+
+- [x] discovery requires bounded explicit roots;
+- [x] default ignore behavior is deterministic and project-owned;
+- [x] registry state cannot rediscover itself;
+- [x] discovery does not follow symbolic links;
+- [x] overlapping roots produce deterministic deduplicated output;
+- [x] registered/unregistered/changed state is explicit;
+- [x] discovery does not infer scientific artifact kind or provenance semantics;
+- [x] dry-run plans produce exact contract-validated manifest previews;
+- [x] planning performs no manifest writes;
+- [x] changed registered files require explicit review rather than silent refresh;
+- [x] ADR and documentation define the bounded authority model;
+- [ ] bounded-scope audit passes;
+- [ ] remote PR CI passes;
+- [ ] integration merged and main push CI passes.
+
+### Non-goals preserved
+
+No content parsing, PDF/PPT extraction, embeddings, RAG, vector database, LLM provider, agent orchestration, claim/evidence extraction, manuscript generation, or scientific interpretation was introduced.
+
+### Explicitly deferred
+
+- batch-plan execution/mutation;
+- stale-plan verification between review and apply;
+- rollback/all-or-nothing semantics;
+- same-batch parent dependencies;
+- CLI/UX adapters;
+- changed-artifact refresh workflow;
+- directory candidate discovery and recursive directory hashing.
+
+## Ready next increment after Phase 1C integration — Phase 1D: reviewed batch-plan execution
+
+**Status:** BLOCKED on Phase 1C integration.
+
+### Objective
+
+Execute an already-reviewed `BatchRegistrationPlan` safely while verifying that filesystem facts have not changed since planning and defining explicit failure/rollback semantics.
+
+The execution layer must remain a mechanical ingestion capability and must not introduce semantic parsing or scientific interpretation.
