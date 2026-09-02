@@ -152,9 +152,10 @@ No PDF/PPT semantic parser, embedding model, vector database, RAG layer, LLM pro
 
 ## 2026-09-02 — Phase 1C: bounded artifact discovery and dry-run batch planning
 
-**Branch:** `phase/1c-artifact-discovery`
+**Branch:** `phase/1c-artifact-discovery`  
+**Integration carrier:** PR #4
 
-**Status:** ACTIVE — implementation and bounded design complete; remote CI/integration pending.
+**Status:** COMPLETE at implementation/review boundary — bounded-scope audit and PR CI passed; integration pending.
 
 ### Objective
 
@@ -178,6 +179,12 @@ Make the repository-drop workflow convenient by discovering candidate research f
 - recorded durable bounded-discovery choices in `docs/decisions/ADR-0003-bounded-artifact-discovery.md`;
 - added filesystem-backed tests covering roots, ignores, ordering/deduplication, registry exclusion, registered/changed states, symlink behavior, exact dry-run manifests, parent resolution, collision handling, and invalid semantic inputs.
 
+### Validation and audit
+
+- `main..phase/1c-artifact-discovery` was audited as ahead-only and limited to discovery/planning runtime code, exports, tests, docs/ADR, and development state;
+- PR #4 GitHub Actions run `33618851340` completed successfully on head `793163b234f65e933b0d6a394d7991eb58866004`;
+- checkout, Python setup, dependency installation, existing artifact contract/registration tests, and the new discovery/planning suite all passed.
+
 ### Phase 1C exit conditions
 
 - [x] discovery requires bounded explicit roots;
@@ -191,8 +198,8 @@ Make the repository-drop workflow convenient by discovering candidate research f
 - [x] planning performs no manifest writes;
 - [x] changed registered files require explicit review rather than silent refresh;
 - [x] ADR and documentation define the bounded authority model;
-- [ ] bounded-scope audit passes;
-- [ ] remote PR CI passes;
+- [x] bounded-scope audit passes;
+- [x] remote PR CI passes;
 - [ ] integration merged and main push CI passes.
 
 ### Non-goals preserved
