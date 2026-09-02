@@ -10,6 +10,16 @@ from .artifacts import (
     validate_artifact_id,
     validate_repository_path,
 )
+from .claim_evidence import (
+    Claim,
+    ClaimEvidenceLink,
+    ClaimStatus,
+    Evidence,
+    EvidenceKind,
+    EvidenceRelation,
+    EvidenceSourceRef,
+    RelationStatus,
+)
 from .discovery import (
     ArtifactDiscoverer,
     BatchRegistrationPlan,
@@ -65,6 +75,11 @@ from .research_state import (
     validate_hypothesis_id,
     validate_research_question_id,
 )
+from .scientific_ids import (
+    validate_claim_evidence_link_id,
+    validate_claim_id,
+    validate_evidence_id,
+)
 
 __all__ = [
     "ArtifactConflictError",
@@ -85,6 +100,9 @@ __all__ = [
     "BatchPreflightError",
     "BatchRegistrationPlan",
     "BatchRollbackError",
+    "Claim",
+    "ClaimEvidenceLink",
+    "ClaimStatus",
     "Decision",
     "DecisionOutcome",
     "DecisionSubjectType",
@@ -93,6 +111,10 @@ __all__ = [
     "DiscoveryPolicy",
     "DiscoveryRootError",
     "DiscoveryState",
+    "Evidence",
+    "EvidenceKind",
+    "EvidenceRelation",
+    "EvidenceSourceRef",
     "Hypothesis",
     "ParentArtifactNotFoundError",
     "PlannedRegistration",
@@ -103,6 +125,7 @@ __all__ = [
     "Provenance",
     "RegistrationPlanError",
     "RegistrationSelection",
+    "RelationStatus",
     "ResearchQuestion",
     "ResearchStateAuditFinding",
     "ResearchStateNotFoundError",
@@ -116,7 +139,10 @@ __all__ = [
     "infer_media_type",
     "sha256_file",
     "validate_artifact_id",
+    "validate_claim_evidence_link_id",
+    "validate_claim_id",
     "validate_decision_id",
+    "validate_evidence_id",
     "validate_hypothesis_id",
     "validate_repository_path",
     "validate_research_question_id",
