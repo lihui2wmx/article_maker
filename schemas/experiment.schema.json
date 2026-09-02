@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:article-maker:schema:experiment:1.0",
+  "title": "Experiment Provenance Contracts",
+  "description": "Framework-neutral contracts for intended Experiment specifications and observed ExperimentRun provenance.",
+  "oneOf": [
+    {"$ref": "#/$defs/experiment"},
+    {"$ref": "#/$defs/experiment_run"}
+  ],
+  "$defs": {
+    "artifact_id": {"type": "string", "pattern": "^art-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "experiment_id": {"type": "string", "pattern": "^exp-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "run_id": {"type": "string", "pattern": "^exprun-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "git_revision": {"type": "string", "pattern": "^[0-9a-f]{7,64}$"},
+    "nonblank": {"type": "string", "pattern": ".*\\S.*"},
+    "metadata": {"type": "object"},
+    "artifact_list": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/artifact_id"}
+    },
+    "proposal_attribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "actor"],
+      "properties": {
+        "source": {"enum": ["human", "agent"]},
+        "actor": {"$ref": "#/$defs/nonblank"}
+      }
+    },
+    "code_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["git_revision", "dirty", "code_artifact_ids"],
+      "properties": {
+        "git_revision": {"$ref": "#/$defs/git_revision"},
+        "repository": {"oneOf": [{"$ref": "#/$defs/nonblank"}, {"type": "null"}]},
+        "dirty": {"type": "boolean"},
+        "working_tree_diff_artifact_id": {
+          "oneOf": [{"$ref": "#/$defs/artifact_id"}, {"type": "null"}]
+        },
+        "code_artifact_ids": {"$ref": "#/$defs/artifact_list"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"dirty": {"const": true}}, "required": ["dirty"]},
+          "then": {
+            "required": ["working_tree_diff_artifact_id"],
+            "properties": {"working_tree_diff_artifact_id": {"$ref": "#/$defs/artifact_id"}}
+          }
+        },
+        {
+          "if": {"properties": {"dirty": {"const": false}}, "required": ["dirty"]},
+          "then": {"properties": {"working_tree_diff_artifact_id": {"type": "null"}}}
+        }
+      ]
+    },
+    "execution_environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime", "environment_artifact_ids", "metadata"],
+      "properties": {
+        "runtime": {"$ref": "#/$defs/nonblank"},
+        "operating_system": {"oneOf": [{"$ref": "#/$defs/nonblank"}, {"type": "null"}]},
+        "architecture": {"oneOf": [{"$ref": "#/$defs/nonblank"}, {"type": "null"}]},
+        "container_image": {"oneOf": [{"$ref": "#/$defs/nonblank"}, {"type": "null"}]},
+        "environment_artifact_ids": {"$ref": "#/$defs/artifact_list"},
+        "metadata": {"$ref": "#/$defs/metadata"}
+      }
+    },
+    "termination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason", "diagnostic_artifact_ids"],
+      "properties": {
+        "reason": {"$ref": "#/$defs/nonblank"},
+        "stage": {"oneOf": [{"$ref": "#/$defs/nonblank"}, {"type": "null"}]},
+        "diagnostic_artifact_ids": {"$ref": "#/$defs/artifact_list"}
+      }
+    },
+    "run_lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relation", "parent_run_id"],
+      "properties": {
+        "relation": {"enum": ["rerun", "reproduction"]},
+        "parent_run_id": {"$ref": "#/$defs/run_id"}
+      }
+    },
+    "experiment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "experiment_id",
+        "title",
+        "objective",
+        "proposed_by",
+        "input_artifact_ids",
+        "config_artifact_ids",
+        "parameters",
+        "expected_code",
+        "expected_environment",
+        "metadata"
+      ],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "experiment_id": {"$ref": "#/$defs/experiment_id"},
+        "title": {"$ref": "#/$defs/nonblank"},
+        "objective": {"$ref": "#/$defs/nonblank"},
+        "proposed_by": {"$ref": "#/$defs/proposal_attribution"},
+        "input_artifact_ids": {"$ref": "#/$defs/artifact_list"},
+        "config_artifact_ids": {"$ref": "#/$defs/artifact_list"},
+        "parameters": {"type": "object"},
+        "expected_code": {"$ref": "#/$defs/code_provenance"},
+        "expected_environment": {"$ref": "#/$defs/execution_environment"},
+        "metadata": {"$ref": "#/$defs/metadata"}
+      }
+    },
+    "experiment_run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "run_id",
+        "experiment_id",
+        "experiment_spec_digest",
+        "status",
+        "started_at",
+        "finished_at",
+        "executed_by",
+        "input_artifact_ids",
+        "config_artifact_ids",
+        "resolved_parameters",
+        "code",
+        "environment",
+        "output_artifact_ids",
+        "termination",
+        "lineage",
+        "metadata"
+      ],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "run_id": {"$ref": "#/$defs/run_id"},
+        "experiment_id": {"$ref": "#/$defs/experiment_id"},
+        "experiment_spec_digest": {"$ref": "#/$defs/sha256"},
+        "status": {"enum": ["planned", "running", "completed", "failed", "cancelled", "partial"]},
+        "started_at": {"oneOf": [{"type": "string", "format": "date-time"}, {"type": "null"}]},
+        "finished_at": {"oneOf": [{"type": "string", "format": "date-time"}, {"type": "null"}]},
+        "executed_by": {"$ref": "#/$defs/proposal_attribution"},
+        "input_artifact_ids": {"$ref": "#/$defs/artifact_list"},
+        "config_artifact_ids": {"$ref": "#/$defs/artifact_list"},
+        "resolved_parameters": {"type": "object"},
+        "code": {"$ref": "#/$defs/code_provenance"},
+        "environment": {"$ref": "#/$defs/execution_environment"},
+        "output_artifact_ids": {"$ref": "#/$defs/artifact_list"},
+        "termination": {"oneOf": [{"$ref": "#/$defs/termination"}, {"type": "null"}]},
+        "lineage": {"oneOf": [{"$ref": "#/$defs/run_lineage"}, {"type": "null"}]},
+        "metadata": {"$ref": "#/$defs/metadata"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "planned"}}, "required": ["status"]},
+          "then": {
+            "properties": {
+              "started_at": {"type": "null"},
+              "finished_at": {"type": "null"},
+              "termination": {"type": "null"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "running"}}, "required": ["status"]},
+          "then": {
+            "properties": {
+              "started_at": {"type": "string", "format": "date-time"},
+              "finished_at": {"type": "null"},
+              "termination": {"type": "null"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "completed"}}, "required": ["status"]},
+          "then": {
+            "properties": {
+              "started_at": {"type": "string", "format": "date-time"},
+              "finished_at": {"type": "string", "format": "date-time"},
+              "termination": {"type": "null"}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"status": {"enum": ["failed", "cancelled", "partial"]}},
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "started_at": {"type": "string", "format": "date-time"},
+              "finished_at": {"type": "string", "format": "date-time"},
+              "termination": {"$ref": "#/$defs/termination"}
+            }
+          }
+        }
+      ]
+    }
+  }
+}
