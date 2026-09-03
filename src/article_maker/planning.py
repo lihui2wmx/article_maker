@@ -184,15 +184,10 @@ class PlanningTask(BaseModel):
         if self.planning_task_id in self.depends_on_task_ids:
             raise ValueError("a planning task must not depend on itself")
 
-        executable_states = {
+        execution_states = {
             PlanningTaskStatus.READY,
             PlanningTaskStatus.IN_PROGRESS,
             PlanningTaskStatus.COMPLETED,
-        }
-        pre_execution_states = {
-            PlanningTaskStatus.PROPOSED,
-            PlanningTaskStatus.BLOCKED,
-            PlanningTaskStatus.CANCELLED,
         }
 
         if self.authorization_requirement is AuthorizationRequirement.NONE:
@@ -205,21 +200,37 @@ class PlanningTask(BaseModel):
                     "rejected status is reserved for human-gated tasks with a governing Decision"
                 )
         else:
-            if self.status in executable_states and self.governing_decision_id is None:
+            if self.status is PlanningTaskStatus.PROPOSED and self.governing_decision_id is not None:
+                raise ValueError(
+                    "proposed human-gated tasks must not declare governing_decision_id"
+                )
+            if self.status in execution_states and self.governing_decision_id is None:
                 raise ValueError(
                     "human-gated ready/in_progress/completed tasks require governing_decision_id"
                 )
             if self.status is PlanningTaskStatus.REJECTED and self.governing_decision_id is None:
                 raise ValueError("rejected human-gated tasks require governing_decision_id")
-            if self.status in pre_execution_states and self.governing_decision_id is not None:
-                raise ValueError(
-                    "proposed/blocked/cancelled human-gated tasks must not declare governing_decision_id"
-                )
 
         if self.status is PlanningTaskStatus.COMPLETED:
             if not self.completion_refs:
                 raise ValueError("completed planning tasks require completion_refs")
         elif self.completion_refs:
             raise ValueError("completion_refs are only valid for completed planning tasks")
+
+        if self.kind is PlanningTaskKind.EXPERIMENT_EXECUTION:
+            if self.authorization_requirement is not AuthorizationRequirement.HUMAN:
+                raise ValueError("experiment_execution tasks require human authorization")
+            if not any(
+                ref.reference_type is PlanningReferenceType.EXPERIMENT
+                for ref in self.references
+            ):
+                raise ValueError("experiment_execution tasks must reference an Experiment")
+            if self.status is PlanningTaskStatus.COMPLETED and not any(
+                ref.reference_type is PlanningReferenceType.EXPERIMENT_RUN
+                for ref in self.completion_refs
+            ):
+                raise ValueError(
+                    "completed experiment_execution tasks require an ExperimentRun completion reference"
+                )
 
         return self
