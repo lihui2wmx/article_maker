@@ -13,8 +13,8 @@ Detailed historical phase notes remain available in Git history. This compact fo
 
 ## Current repository state — 2026-09-03
 
-**Active next phase:** Phase 6C — bounded research-planning proposal construction from audited repository state  
-**Status:** READY  
+**Active phase:** Phase 6C — bounded research-planning proposal construction from audited repository state  
+**Status:** IMPLEMENTED — initial PR CI passed; package exports/latest-head integration gates pending  
 **Default branch:** `main`
 
 ### Completed milestones
@@ -38,76 +38,48 @@ Detailed historical phase notes remain available in Git history. This compact fo
 | Phase 5C — reviewed Experiment-output-to-Evidence bridge | COMPLETE | PR #15 |
 | Phase 6A — typed research-planning task contracts | COMPLETE | PR #16 |
 | Phase 6B — PlanningTask registry/authorization audit | COMPLETE | PR #17 |
+| Phase 6C — deterministic PlanningTask proposals | INTEGRATION PENDING | PR #18 |
 
-## Phase 6B closure
+## Phase 6C — bounded research-planning proposal construction
 
-**Branch:** `phase/6b-planning-task-registry`  
-**Integration carrier:** PR #17  
-**Initial passing PR CI:** `33705460686` — success  
-**Latest-head PR CI:** `33705521597` — success  
-**Integrated main commit:** `9da8188f8e8586a072f9d02d7d3a902b9b16954d`  
-**Merged-main CI:** `33705562544` — success
+**Branch:** `phase/6c-planning-proposals`  
+**Integration carrier:** PR #18  
+**Initial PR CI:** `33705962043` — success
 
-Phase 6B added:
+### Implemented
 
-- canonical `research/planning_tasks/<ptask-id>.json` persistence;
-- deterministic atomic save/load/list APIs;
-- malformed-record-tolerant filename/ID and duplicate-ID audit;
-- typed PlanningReference resolution across canonical Phase 1–5 registries;
-- missing dependency and transitive dependency-cycle detection;
-- human governing Decision existence, subject/backlink, and outcome checks;
-- completion-reference resolution for completed tasks;
-- read-only audit behavior with no scheduling or execution;
-- package exports, focused regression tests, architecture layout update, and `docs/PLANNING_TASK_REGISTRY.md`.
+- framework-neutral `PlanningProposalCandidate`, `PlanningProposalReason`, and `PlanningProposalBuilder`;
+- pure deterministic `propose_from_state()` over already-audited canonical objects;
+- repository-backed `propose_from_repository()` that refuses to operate when Claim/Evidence, literature, experiment, or PlanningTask audits report findings;
+- stable proposal IDs derived from `(proposal_reason, source_id)`;
+- rule-based proposal for active Claims with no persisted ClaimEvidenceLink -> `evidence_review`;
+- rule-based proposal for Citations with no LiteratureNote -> `literature_analysis`;
+- rule-based proposal for Experiments with no completed ExperimentRun -> human-gated `experiment_execution`;
+- rejected/superseded Claims excluded from new evidence-review proposals;
+- existing deterministic PlanningTask IDs suppress duplicate proposals;
+- explicit proposal provenance in task metadata and attributed `rule-based-planner` proposer;
+- focused tests for determinism, resolved-gap suppression, inactive-Claim suppression, duplicate suppression, human gating, and dirty-audit refusal/read-only behavior;
+- operational documentation in `docs/PLANNING_PROPOSALS.md`.
 
-PlanningTask persistence and audit remain operational only. A clean audit or completed PlanningTask does not approve a Claim, accept a Hypothesis, interpret Evidence, establish experimental validity/reproducibility, approve manuscript content, choose a venue, or authorize submission.
+### Authority boundary
 
-### Phase 6B exit conditions
+Phase 6C identifies objective missing repository structure only. It does not decide whether evidence is scientifically sufficient, establish novelty, choose research direction, persist proposals as accepted work, schedule tasks, execute experiments, approve Claims/Hypotheses/Evidence interpretations, generate manuscripts, or submit externally.
 
-- [x] canonical PlanningTask repository location exists;
-- [x] deterministic save/load/list APIs exist;
-- [x] malformed PlanningTask records do not abort audit;
-- [x] filename/ID and duplicate-ID integrity checks exist;
-- [x] every Phase 6A PlanningReference type resolves against canonical Phase 1–5 state;
-- [x] missing dependencies and transitive dependency cycles are audited;
-- [x] human governing Decisions are resolved and checked for subject/backlink consistency;
-- [x] Decision outcomes are checked against PlanningTask authorization lifecycle;
-- [x] completion references are resolved;
-- [x] audit is read-only and does not schedule or execute work;
-- [x] architecture and registry documentation are updated;
-- [x] initial passing PR CI passes (`33705460686`);
-- [x] latest-head PR CI passes (`33705521597`);
-- [x] PR #17 squash merged (`9da8188f8e8586a072f9d02d7d3a902b9b16954d`);
-- [x] merged `main` CI passes (`33705562544`).
+Experiment-execution candidates remain `status=proposed`, `authorization_requirement=human`, and have no governing Decision. They cannot become execution-eligible under the Phase 6A/6B contract without later explicit human authorization.
 
-## Next bounded increment — Phase 6C: bounded research-planning proposal construction
+### Remaining closure work
 
-**Status:** READY after Phase 6B integration.
+- [x] deterministic proposal input/output layer exists;
+- [x] repository audit gate precedes repository-backed proposals;
+- [x] initial objective structural-gap rules exist;
+- [x] proposal/persistence/execution boundaries remain separate;
+- [x] experiment-execution proposals preserve hard human authorization;
+- [x] deterministic tests exist and initial PR CI passes (`33705962043`);
+- [x] proposal contract documentation exists;
+- [ ] package-root exports are added for the new public proposal API;
+- [ ] latest-head PR CI passes after closure updates;
+- [ ] PR #18 is reviewed/merged and merged-main CI passes.
 
-### Objective
+## Next bounded task
 
-Construct deterministic or explicitly attributed candidate `PlanningTask` proposals from audited repository state without scheduling or executing them. The planner should surface concrete research gaps and bounded next-work candidates while preserving human authority over scientific direction.
-
-### Initial boundary
-
-Phase 6C should at minimum:
-
-- consume only repository state that passes the relevant registry/audit boundary;
-- define a framework-neutral proposal input/output contract rather than an agent-framework runtime;
-- construct bounded PlanningTask proposals with explicit objective, completion criteria, rationale, priority, typed references, and dependencies;
-- identify proposal reasons such as unsupported/weak Claims, missing Evidence, unresolved literature gaps, incomplete experiment provenance, or reproducibility gaps using existing canonical state rather than invented facts;
-- keep proposal generation distinct from PlanningTask persistence/acceptance and from execution;
-- preserve human authorization requirements for any human-gated task, especially experiment execution;
-- provide deterministic tests/fixtures for rule-based proposal construction before adding probabilistic model adapters.
-
-### Non-goals
-
-Do not introduce in Phase 6C:
-
-- autonomous scheduling or workers;
-- automatic persistence of proposed tasks as accepted work;
-- experiment execution;
-- automatic scientific approval or novelty assertions;
-- provider-specific agent orchestration;
-- manuscript generation;
-- submission automation.
+Add package-root exports for the Phase 6C public proposal API, perform a bounded PR diff review, update PR #18 validation metadata, and run latest-head CI. Do not add probabilistic model/provider adapters, automatic proposal persistence, scheduling, workers, or execution in this closure increment.
