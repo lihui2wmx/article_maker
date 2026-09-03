@@ -2,9 +2,11 @@
 
 ## Architectural thesis
 
-`article_maker` is designed as a **repository-centric research operating system**, not as a prompt wrapper around a large language model.
+`article_maker` is designed as a **repository-centric, AI-native research operating system**, not as a prompt wrapper or an application that invokes a large language model through provider APIs.
 
-The durable system of record is structured research state stored in the repository. AI agents operate over that state through bounded workflows. Manuscripts are projections of approved scientific state into a venue-specific LaTeX representation.
+The durable system of record is structured research state stored in the repository. A capable external AI agent is expected to inspect the repository, read its operating contract, use deterministic repository tooling, modify bounded state, and leave durable handoff artifacts. Manuscripts are projections of approved scientific state into a venue-specific LaTeX representation.
+
+The primary execution boundary is therefore **AI operates repository**, not **repository calls AI**.
 
 ## Logical layers
 
@@ -13,10 +15,13 @@ Human researcher
       |
       | approvals / decisions
       v
-Workflow and human gates
+Repository governance + human gates
       |
       v
-Specialized agents
+External AI operator(s)
+      |
+      v
+Repository-native workflows / deterministic tooling
       |
       v
 Research state / claim-evidence graph / decision log
@@ -37,23 +42,51 @@ Stores source material and generated durable artifacts: literature, notes, slide
 
 ### 2. Retrieval/index layer
 
-Provides deterministic metadata lookup plus semantic retrieval. Vector search is an index, not the canonical store. Deleting an index must never destroy scientific state.
+Provides deterministic metadata lookup plus optional semantic retrieval. Any semantic/vector index is disposable and derived; deleting an index must never destroy scientific state.
 
 ### 3. Scientific state layer
 
 Holds typed objects such as `ResearchQuestion`, `Hypothesis`, `Claim`, `Evidence`, `Citation`, `Experiment`, and `Decision`. This layer is the architectural core.
 
-### 4. Workflow layer
+### 4. Repository workflow/tooling layer
 
-Runs explicit state transitions and quality gates. Workflows should be inspectable and deterministic around permissions even when individual model calls are probabilistic.
+Provides explicit state transitions, validators, audits, CLIs/APIs, reproducibility checks, build tooling, and quality gates that an external AI operator can invoke. Permission and transition semantics should be deterministic and inspectable.
 
-### 5. Agent layer
+### 5. AI operator layer
 
-Specialized roles perform literature analysis, research planning, experiment analysis, writing, statistical review, citation auditing, reproducibility auditing, venue adaptation, and adversarial review.
+Specialized AI roles perform literature analysis, research planning, experiment analysis, writing, statistical review, citation auditing, reproducibility auditing, venue adaptation, and adversarial review by operating directly on repository state and following version-controlled instructions.
+
+Different roles may be executed by different AI contexts or models, but the repository does not own or invoke those models as part of its core runtime.
 
 ### 6. Human authority layer
 
 Humans approve high-impact scientific transitions. Approval is represented as data, not inferred from an agent's wording.
+
+## AI-native execution contract
+
+An AI should be able to enter the repository without prior chat history and recover enough context to continue safely. At minimum, the repository should make the following path legible and executable:
+
+```text
+read PROJECT.md
+  -> read AGENTS.md
+  -> read ARCHITECTURE.md + DEVELOPMENT_LOG.md
+  -> inspect relevant canonical state and audits
+  -> perform one bounded task
+  -> validate deterministic invariants
+  -> write durable state / manuscript / review artifacts
+  -> update handoff state
+```
+
+The repository should therefore favor:
+
+- explicit instructions over hidden orchestration;
+- canonical files over chat memory;
+- stable schemas and identifiers over prompt-only conventions;
+- deterministic validators/audits over implicit agent judgment for mechanical rules;
+- reviewable bounded increments over opaque autonomous loops;
+- resumable handoff artifacts over session-local memory.
+
+Prompting guidance, role instructions, workflow recipes, checklists, and manuscript templates may be stored in the repository when useful. They are operator-facing protocol artifacts, not an embedded AI service.
 
 ## Canonical repository layout
 
@@ -93,8 +126,8 @@ article_maker/
 │   ├── bibliography/
 │   └── supplementary/
 ├── reviews/
-├── workflows/
-├── src/article_maker/
+├── workflows/                # repository-native workflow/instruction artifacts
+├── src/article_maker/        # deterministic domain logic and tooling
 ├── tests/
 └── .github/workflows/
 ```
@@ -104,13 +137,13 @@ article_maker/
 Human-readable YAML/Markdown and machine-validated schemas should coexist where practical:
 
 - YAML/JSON: structured state and manifests;
-- Markdown: rationale, summaries, and human decisions;
+- Markdown: rationale, summaries, operating instructions, reviews, and human decisions;
 - SQLite/DuckDB: derived indexes or experiment/query convenience when needed;
 - graph representation: derived from canonical claim/evidence records unless a graph database is later justified;
 - vector database: disposable retrieval index;
 - Git history: provenance for state transitions and implementation changes.
 
-No external database should become the only copy of research-critical state without an explicit architecture decision.
+No external database or AI-provider memory should become the only copy of research-critical state without an explicit architecture decision.
 
 ## Core graph
 
@@ -131,11 +164,11 @@ Evidence
   -> provenance -> code/data/config/version
 ```
 
-The exact storage representation will be defined during Phase 3; this document defines the semantic boundary only.
+The exact storage representation is defined by phase-specific contracts; this document defines the semantic boundary.
 
 ## Manuscript generation model
 
-Generation should proceed through structured intermediate representations:
+Generation should proceed through repository-native structured intermediate representations:
 
 ```text
 approved claims + evidence + citations + venue profile
@@ -156,11 +189,11 @@ approved claims + evidence + citations + venue profile
      claim/citation/numeric/review audits
 ```
 
-A writer should not manufacture missing evidence. Unsupported narrative needs become explicit gaps or research tasks.
+An external AI writer should construct these artifacts directly from canonical repository state. It must not manufacture missing evidence. Unsupported narrative needs become explicit gaps or research tasks.
 
 ## Agent permission model
 
-The initial permission model is capability-based rather than framework-specific.
+The initial permission model is capability-based and applies to AI operators rather than to an embedded agent runtime.
 
 | Role | Read artifacts | Propose research | Execute bounded analysis | Edit manuscript | Approve scientific claims | Submit |
 |---|---:|---:|---:|---:|---:|---:|
@@ -176,17 +209,18 @@ Implementation may refine permissions but must preserve the human-only authority
 
 ## Technology direction
 
-The initial implementation should remain intentionally small:
+The implementation should remain intentionally small and repository-native:
 
-- Python for orchestration and domain logic;
+- Python for deterministic domain logic, validation, repository operations, and reusable tooling;
 - Pydantic or equivalent schema validation;
 - YAML/JSON for repository state;
+- Markdown for agent/human operating protocol and review artifacts;
 - SQLite or DuckDB only when query/index needs justify it;
-- Git for provenance and collaboration;
+- Git for provenance, collaboration, and resumable handoff;
 - LaTeX for manuscript output;
-- provider adapters around LLM APIs rather than provider-specific domain models.
+- CLI/library interfaces where they make deterministic repository operations easier for an external AI operator.
 
-An agent framework may be added later as an adapter. Core domain objects, permissions, and workflow transitions must not depend on LangChain, CrewAI, AutoGen, or any single provider.
+Core product functionality must not require OpenAI/Anthropic/Gemini/etc. SDKs, LLM API credentials, embedded model calls, or an agent framework such as LangChain, CrewAI, or AutoGen. Optional external wrappers may exist outside the core repository contract, but they are clients of the repository rather than part of its canonical scientific architecture.
 
 ## Quality architecture
 
@@ -207,8 +241,12 @@ The mature system should support quality gates for at least:
 
 The project is not intended to:
 
+- invoke AI models through a built-in provider/API layer as its primary operating model;
+- embed a general-purpose autonomous-agent runtime inside the core system;
 - autonomously fabricate scientific content to complete a manuscript;
 - optimize primarily for stylistic imitation of individual authors;
 - conceal AI involvement or provenance;
 - make unreviewed autonomous submission decisions;
-- place irreplaceable research state solely in embeddings, chat history, or proprietary agent memory.
+- place irreplaceable research state solely in embeddings, chat history, provider memory, or proprietary agent memory.
+
+See `docs/decisions/ADR-0016-ai-native-repository-execution-model.md` for the durable decision establishing this boundary.
