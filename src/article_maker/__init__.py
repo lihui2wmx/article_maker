@@ -131,6 +131,13 @@ from .planning import (
     PlanningTaskScope,
     PlanningTaskStatus,
 )
+from .planning_proposals import (
+    PlanningProposalBuilder,
+    PlanningProposalCandidate,
+    PlanningProposalError,
+    PlanningProposalReason,
+    PlanningProposalSourceAuditError,
+)
 from .planning_registry import (
     PlanningTaskAuditFinding,
     PlanningTaskNotFoundError,
@@ -272,6 +279,11 @@ __all__ = [
     "PlannedExperimentEvidence",
     "PlannedLiteratureEvidence",
     "PlannedRegistration",
+    "PlanningProposalBuilder",
+    "PlanningProposalCandidate",
+    "PlanningProposalError",
+    "PlanningProposalReason",
+    "PlanningProposalSourceAuditError",
     "PlanningReference",
     "PlanningReferenceType",
     "PlanningTask",
