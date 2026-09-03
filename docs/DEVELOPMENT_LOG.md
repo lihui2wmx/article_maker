@@ -13,8 +13,8 @@ Detailed historical phase notes remain available in Git history. This compact fo
 
 ## Current repository state — 2026-09-03
 
-**Active phase:** Phase 5B — repository Experiment registry and provenance audit  
-**Status:** IMPLEMENTED — PR #14 initial CI passed; latest-head/integration gates pending  
+**Active next phase:** Phase 5C — reviewed Experiment-output-to-Evidence proposal bridge  
+**Status:** READY  
 **Default branch:** `main`
 
 ### Completed milestones
@@ -34,77 +34,38 @@ Detailed historical phase notes remain available in Git history. This compact fo
 | Phase 4B — literature registry/citation-integrity audit | COMPLETE | PR #11 |
 | Phase 4C — reviewed literature-to-Evidence bridge | COMPLETE | PR #12 |
 | Phase 5A — typed Experiment provenance contracts | COMPLETE | PR #13 |
-| Phase 5B — Experiment registry/provenance audit | INTEGRATION PENDING | PR #14 |
+| Phase 5B — Experiment registry/provenance audit | COMPLETE | PR #14 |
 
-## Phase 5B — repository Experiment registry and provenance audit
+## Phase 5B closure
 
 **Branch:** `phase/5b-experiment-registry`  
 **Integration carrier:** PR #14  
-**Initial PR CI:** `33700963581` — success
+**Initial PR CI:** `33700963581` — success  
+**Latest-head PR CI:** `33701039373` — success  
+**Integrated main commit:** `b37ff7e2cc17b266f7d11c8fd19381f0b7f56c0c`  
+**Merged-main CI:** `33701092603` — success
 
-### Implemented
+Phase 5B added repository-native Experiment persistence and read-only provenance audit with:
 
-- added `ExperimentRegistry` in `src/article_maker/experiment_registry.py`;
-- canonical layout:
-  - `experiments/<experiment-id>/experiment.json`;
-  - `experiments/<experiment-id>/runs/<run-id>.json`;
-- deterministic UTF-8 JSON persistence with same-directory atomic replace;
-- typed save/load/list APIs for Experiment and ExperimentRun;
-- malformed-record-tolerant read-only repository audit;
-- Experiment Artifact audit for inputs, configs, code snapshots, dirty-code diff, and environment Artifacts;
-- Run -> Experiment existence audit;
-- exact Run `experiment_spec_digest` verification against the current canonical Experiment;
-- Run Artifact audit for inputs, configs, code, dirty-code diff, environment, outputs, and termination diagnostics;
-- Experiment directory identity and duplicate Experiment ID audit;
-- Run filename/storage-directory identity and duplicate Run ID audit;
-- rerun/reproduction parent existence audit;
-- repository-level Run lineage cycle detection;
-- exported registry API from package root;
-- filesystem-backed tests for clean persistence, missing Experiment, spec drift, missing Artifacts, dirty-code diff provenance, missing lineage parents, lineage cycles, directory/filename mismatches, duplicate IDs, malformed records, unsafe paths, and typed missing loads;
-- documented behavior in `docs/EXPERIMENT_REGISTRY.md`;
-- recorded durable choices in `docs/decisions/ADR-0013-repository-experiment-registry-and-provenance-audit.md`.
+- canonical `experiments/<experiment-id>/experiment.json` and `runs/<run-id>.json` locations;
+- deterministic UTF-8 JSON persistence and typed save/load/list APIs;
+- malformed-record-tolerant global audit;
+- Experiment and Run Artifact provenance resolution;
+- exact Run-to-Experiment `experiment_spec_digest` verification;
+- dirty-code diff and termination-diagnostic Artifact checks;
+- directory/filename identity and duplicate-ID checks;
+- rerun/reproduction parent existence and lineage-cycle detection.
 
-### Scientific authority boundary
+All findings remain structural/operational. A clean registry does not imply scientific validity, statistical significance, reproduction success, Evidence eligibility, Claim support, or manuscript readiness.
 
-Phase 5B findings are structural and operational only. A clean registry does not establish scientific validity, statistical significance, successful reproduction, Hypothesis support, Evidence eligibility, Claim approval, or manuscript readiness.
+Documentation:
 
-The registry does not:
-
-- execute or schedule jobs;
-- launch remote/cloud/HPC workloads;
-- expand parameter sweeps;
-- compare numerical outcomes;
-- score reproducibility success;
-- promote Run outputs to Evidence;
-- create ClaimEvidenceLink records;
-- invoke an LLM or agent runtime.
-
-### Validation and scope audit
-
-- `main..phase/5b-experiment-registry` is ahead-only and limited to registry runtime, exports, tests, documentation/ADR, and this handoff state;
-- initial PR #14 CI run `33700963581` completed successfully, including all existing Phase 1–5A tests and the new Phase 5B suite;
-- no scheduler, execution adapter, parameter-sweep engine, reproducibility scoring, statistical interpretation, automatic Evidence/Claim creation, LLM/agent orchestration, or manuscript generation was introduced.
-
-### Phase 5B exit conditions
-
-- [x] deterministic Experiment/Run repository layout exists;
-- [x] typed save/load/list APIs exist;
-- [x] malformed-record-tolerant read-only audit exists;
-- [x] Experiment and Run Artifact provenance is audited;
-- [x] Run -> Experiment and exact spec digest are audited;
-- [x] dirty-code diff provenance is audited;
-- [x] directory/filename identity and duplicate IDs are audited;
-- [x] lineage parent existence and cycles are audited;
-- [x] filesystem-backed tests exist;
-- [x] ADR-0013 records material decisions;
-- [x] bounded-scope audit passes;
-- [x] initial PR CI passes;
-- [ ] latest-head PR CI passes after this handoff update;
-- [ ] PR #14 merged and `main` push CI passes.
+- `docs/EXPERIMENT_REGISTRY.md`
+- `docs/decisions/ADR-0013-repository-experiment-registry-and-provenance-audit.md`
 
 ## Next bounded increment — Phase 5C: reviewed Experiment-output-to-Evidence proposal bridge
 
-**Status:** BLOCKED until Phase 5B integration is complete.
+**Status:** READY after Phase 5B integration.
 
 ### Objective
 
