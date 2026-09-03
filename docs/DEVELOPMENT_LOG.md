@@ -13,8 +13,8 @@ Detailed historical phase notes remain available in Git history. This compact fo
 
 ## Current repository state — 2026-09-03
 
-**Active phase:** Phase 6A — typed research-planning task contracts  
-**Status:** IMPLEMENTED — PR #16 initial CI passed; latest-head/integration gates pending  
+**Active next phase:** Phase 6B — repository planning-task registry and authorization/dependency audit  
+**Status:** READY  
 **Default branch:** `main`
 
 ### Completed milestones
@@ -36,55 +36,38 @@ Detailed historical phase notes remain available in Git history. This compact fo
 | Phase 5A — typed Experiment provenance contracts | COMPLETE | PR #13 |
 | Phase 5B — Experiment registry/provenance audit | COMPLETE | PR #14 |
 | Phase 5C — reviewed Experiment-output-to-Evidence bridge | COMPLETE | PR #15 |
-| Phase 6A — typed research-planning task contracts | INTEGRATION PENDING | PR #16 |
+| Phase 6A — typed research-planning task contracts | COMPLETE | PR #16 |
 
-## Phase 6A — typed research-planning task contracts
+## Phase 6A closure
 
 **Branch:** `phase/6a-planning-task-contracts`  
 **Integration carrier:** PR #16  
-**Initial PR CI:** `33703967034` — success
+**Initial PR CI:** `33703967034` — success  
+**Latest-head PR CI:** `33704050234` — success  
+**Integrated main commit:** `4a47882e5a6818b00a876849a7437b3a7f63a022`  
+**Merged-main CI:** `33704133107` — success
 
-### Implemented
+Phase 6A added framework-neutral bounded research-planning contracts with:
 
-- added stable `ptask-*` PlanningTask identity and shared validator;
-- added framework-neutral `PlanningTask`, `PlanningTaskScope`, `PlanningReference`, task kind/status/priority enums, and authorization requirement;
-- required every task to declare one bounded objective and at least one completion criterion;
-- added typed references to ResearchQuestion, Hypothesis, Claim, Evidence, Artifact, Citation, LiteratureNote, Experiment, and ExperimentRun IDs;
-- added typed task dependencies with duplicate and direct self-dependency rejection;
-- separated operational task lifecycle from scientific approval;
-- required completed tasks to carry durable typed completion references and forbade completion references on non-completed tasks;
-- reused canonical human `Decision` records by extending `DecisionSubjectType` with `planning_task`;
-- required human-gated tasks to carry a Decision before entering execution-eligible states;
-- hard-gated `experiment_execution` tasks to `authorization_requirement=human`, required a concrete Experiment reference, and required an ExperimentRun completion reference when completed;
-- kept blocked/cancelled operational states usable before or after authorization without treating them as scientific decisions;
-- added Draft 2020-12 `schemas/planning-task.schema.json` and extended the research-state Decision schema for `planning_task` subjects;
-- kept standard JSON Schema only: direct self-dependency value comparison remains a Python/domain invariant rather than using non-standard `$data` extensions;
-- exported all planning contracts from the package root;
-- added positive/negative Python and JSON Schema tests, including a regression that Phase 2 registry defers planning-task Decision resolution to the Phase 6 domain;
-- documented the contract in `docs/PLANNING_TASK_CONTRACTS.md`;
-- recorded durable decisions in `docs/decisions/ADR-0015-bounded-planning-tasks-and-human-authorization.md`.
+- stable `ptask-*` PlanningTask identity and shared validation;
+- explicit PlanningTask kind, operational status, proposer, priority/rationale, dependencies, completion references, and JSON metadata;
+- `PlanningTaskScope` with one bounded objective, at least one completion criterion, optional constraints, and optional non-goals;
+- typed references to ResearchQuestion, Hypothesis, Claim, Evidence, Artifact, Citation, LiteratureNote, Experiment, and ExperimentRun state;
+- duplicate/direct-self dependency rejection at the domain-contract layer;
+- operational task lifecycle explicitly separated from scientific approval;
+- durable typed completion references required only for completed tasks;
+- canonical human `Decision` reuse via `DecisionSubjectType.PLANNING_TASK`;
+- human Decision binding before human-gated tasks enter execution-eligible states;
+- hard human gating for `experiment_execution`, including a concrete Experiment reference and ExperimentRun completion provenance;
+- standard Draft 2020-12 planning-task schema, with cross-instance self-dependency comparison deliberately retained as a Python/domain invariant rather than a non-standard Schema extension;
+- Python/JSON Schema positive and negative tests plus Phase 2 registry compatibility coverage.
 
-### Authority boundary
+PlanningTask completion remains an operational fact only. It does not resolve a ResearchQuestion, accept a Hypothesis, approve a Claim, interpret Evidence, establish scientific validity or reproduction success, approve manuscript text, or grant an executor unrestricted capability.
 
-PlanningTask status is operational only.
+Documentation:
 
-`completed` does **not** mean:
-
-- a ResearchQuestion is resolved;
-- a Hypothesis is accepted;
-- a Claim is approved;
-- Evidence supports/contradicts a Claim;
-- an experiment is scientifically valid;
-- reproduction succeeded;
-- manuscript text is approved.
-
-`priority` and `rationale` are proposal metadata rather than scientific truth. A PlanningTask is not itself an execution capability token; future executors must still enforce authorization and bounded-work policy.
-
-### Validation and scope audit
-
-- `main..phase/6a-planning-task-contracts` is ahead-only and limited to planning contracts, shared ID/Decision schema integration, exports, tests, documentation/ADR, and this canonical handoff;
-- initial PR #16 CI run `33703967034` completed successfully, including all existing Phase 1–5C tests and the new Phase 6A suite;
-- no planning registry, scheduler, worker, autonomous loop, provider-specific framework, experiment execution, scientific approval automation, manuscript generation, or submission automation was introduced.
+- `docs/PLANNING_TASK_CONTRACTS.md`
+- `docs/decisions/ADR-0015-bounded-planning-tasks-and-human-authorization.md`
 
 ### Phase 6A exit conditions
 
@@ -100,13 +83,14 @@ PlanningTask status is operational only.
 - [x] Phase 2 compatibility regression exists;
 - [x] ADR-0015 records material decisions;
 - [x] bounded-scope audit passes;
-- [x] initial PR CI passes;
-- [ ] latest-head PR CI passes after this handoff update;
-- [ ] PR #16 merged and `main` push CI passes.
+- [x] initial PR CI passes (`33703967034`);
+- [x] latest-head PR CI passes (`33704050234`);
+- [x] PR #16 squash merged (`4a47882e5a6818b00a876849a7437b3a7f63a022`);
+- [x] merged `main` CI passes (`33704133107`).
 
 ## Next bounded increment — Phase 6B: repository planning-task registry and authorization/dependency audit
 
-**Status:** BLOCKED until Phase 6A integration is complete.
+**Status:** READY after Phase 6A integration.
 
 ### Objective
 
