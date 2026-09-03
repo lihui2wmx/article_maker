@@ -6,7 +6,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Iterable, Sequence
 
-from .claim_evidence import Claim, ClaimEvidenceLink
+from .claim_evidence import Claim, ClaimEvidenceLink, ClaimStatus
 from .claim_registry import ClaimEvidenceRegistry
 from .experiment import Experiment, ExperimentRun, ExperimentRunStatus
 from .experiment_registry import ExperimentRegistry
@@ -79,9 +79,7 @@ class PlanningProposalBuilder:
                 completion_criteria=[
                     "Record a bounded evidence-review result or an explicit follow-up evidence task."
                 ],
-                constraints=[
-                    "Do not approve, reject, or reinterpret the Claim automatically."
-                ],
+                constraints=["Do not approve, reject, or reinterpret the Claim automatically."],
                 non_goals=["Scientific approval of the Claim."],
             ),
             proposed_by=cls._attribution(),
@@ -90,12 +88,7 @@ class PlanningProposalBuilder:
                 f"Claim {claim.claim_id} has no persisted ClaimEvidenceLink, so its evidence "
                 "relationship is structurally unresolved."
             ),
-            references=[
-                PlanningReference(
-                    reference_type=PlanningReferenceType.CLAIM,
-                    reference_id=claim.claim_id,
-                )
-            ],
+            references=[PlanningReference(reference_type=PlanningReferenceType.CLAIM, reference_id=claim.claim_id)],
             metadata={"proposal_reason": reason.value, "source_id": claim.claim_id},
         )
         return PlanningProposalCandidate(reason=reason, source_id=claim.claim_id, task=task)
@@ -110,9 +103,7 @@ class PlanningProposalBuilder:
             status=PlanningTaskStatus.PROPOSED,
             scope=PlanningTaskScope(
                 objective=f"Create a traceable structured analysis for Citation {citation.citation_id}.",
-                completion_criteria=[
-                    "Produce at least one source-grounded LiteratureNote for the Citation."
-                ],
+                completion_criteria=["Produce at least one source-grounded LiteratureNote for the Citation."],
                 constraints=["Preserve source locators and distinguish source report from analysis."],
                 non_goals=["Novelty determination or venue-selection decisions."],
             ),
@@ -122,12 +113,7 @@ class PlanningProposalBuilder:
                 f"Citation {citation.citation_id} has no persisted LiteratureNote and therefore "
                 "has not yet been converted into structured literature intelligence."
             ),
-            references=[
-                PlanningReference(
-                    reference_type=PlanningReferenceType.CITATION,
-                    reference_id=citation.citation_id,
-                )
-            ],
+            references=[PlanningReference(reference_type=PlanningReferenceType.CITATION, reference_id=citation.citation_id)],
             metadata={"proposal_reason": reason.value, "source_id": citation.citation_id},
         )
         return PlanningProposalCandidate(reason=reason, source_id=citation.citation_id, task=task)
@@ -142,16 +128,12 @@ class PlanningProposalBuilder:
             status=PlanningTaskStatus.PROPOSED,
             scope=PlanningTaskScope(
                 objective=f"Execute the approved bounded protocol for Experiment {experiment.experiment_id}.",
-                completion_criteria=[
-                    "Record a canonical ExperimentRun with durable provenance and terminal status."
-                ],
+                completion_criteria=["Record a canonical ExperimentRun with durable provenance and terminal status."],
                 constraints=[
                     "Human authorization is required before the task may become execution-eligible.",
                     "Execution must remain within the persisted Experiment specification.",
                 ],
-                non_goals=[
-                    "Automatic interpretation of results or approval of downstream scientific Claims."
-                ],
+                non_goals=["Automatic interpretation of results or approval of downstream scientific Claims."],
             ),
             proposed_by=cls._attribution(),
             priority=PlanningTaskPriority.NORMAL,
@@ -159,12 +141,7 @@ class PlanningProposalBuilder:
                 f"Experiment {experiment.experiment_id} has no completed ExperimentRun in audited "
                 "repository state."
             ),
-            references=[
-                PlanningReference(
-                    reference_type=PlanningReferenceType.EXPERIMENT,
-                    reference_id=experiment.experiment_id,
-                )
-            ],
+            references=[PlanningReference(reference_type=PlanningReferenceType.EXPERIMENT, reference_id=experiment.experiment_id)],
             authorization_requirement=AuthorizationRequirement.HUMAN,
             metadata={"proposal_reason": reason.value, "source_id": experiment.experiment_id},
         )
@@ -183,17 +160,14 @@ class PlanningProposalBuilder:
         existing_tasks: Sequence[PlanningTask] = (),
     ) -> list[PlanningProposalCandidate]:
         """Pure deterministic construction over already audited canonical objects."""
-
         linked_claim_ids = {link.claim_id for link in links}
         noted_citation_ids = {note.citation_id for note in notes}
-        completed_experiment_ids = {
-            run.experiment_id for run in runs if run.status is ExperimentRunStatus.COMPLETED
-        }
+        completed_experiment_ids = {run.experiment_id for run in runs if run.status is ExperimentRunStatus.COMPLETED}
         existing_task_ids = {task.planning_task_id for task in existing_tasks}
 
         candidates: list[PlanningProposalCandidate] = []
         for claim in sorted(claims, key=lambda item: item.claim_id):
-            if claim.claim_id not in linked_claim_ids:
+            if claim.status in {ClaimStatus.CANDIDATE, ClaimStatus.APPROVED} and claim.claim_id not in linked_claim_ids:
                 candidates.append(cls._claim_candidate(claim))
         for citation in sorted(citations, key=lambda item: item.citation_id):
             if citation.citation_id not in noted_citation_ids:
@@ -204,17 +178,12 @@ class PlanningProposalBuilder:
 
         return [
             candidate
-            for candidate in sorted(
-                candidates,
-                key=lambda item: (item.reason.value, item.source_id, item.task.planning_task_id),
-            )
+            for candidate in sorted(candidates, key=lambda item: (item.reason.value, item.source_id, item.task.planning_task_id))
             if candidate.task.planning_task_id not in existing_task_ids
         ]
 
     @staticmethod
-    def _format_audit_failures(
-        domain: str, findings: Iterable[object]
-    ) -> list[str]:
+    def _format_audit_failures(domain: str, findings: Iterable[object]) -> list[str]:
         messages: list[str] = []
         for finding in findings:
             code = getattr(finding, "code", "unknown")
@@ -224,24 +193,14 @@ class PlanningProposalBuilder:
 
     def propose_from_repository(self) -> list[PlanningProposalCandidate]:
         """Audit source registries, then construct candidates without writing repository state."""
-
         audit_failures: list[str] = []
-        audit_failures.extend(
-            self._format_audit_failures("claim_evidence", self.claim_registry.audit())
-        )
-        audit_failures.extend(
-            self._format_audit_failures("literature", self.literature_registry.audit())
-        )
-        audit_failures.extend(
-            self._format_audit_failures("experiment", self.experiment_registry.audit())
-        )
-        audit_failures.extend(
-            self._format_audit_failures("planning", self.planning_registry.audit())
-        )
+        audit_failures.extend(self._format_audit_failures("claim_evidence", self.claim_registry.audit()))
+        audit_failures.extend(self._format_audit_failures("literature", self.literature_registry.audit()))
+        audit_failures.extend(self._format_audit_failures("experiment", self.experiment_registry.audit()))
+        audit_failures.extend(self._format_audit_failures("planning", self.planning_registry.audit()))
         if audit_failures:
             raise PlanningProposalSourceAuditError(
-                "proposal source state failed repository audit: "
-                + "; ".join(sorted(audit_failures))
+                "proposal source state failed repository audit: " + "; ".join(sorted(audit_failures))
             )
 
         return self.propose_from_state(
