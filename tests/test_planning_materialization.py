@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from article_maker.claim_evidence import Claim, ClaimStatus
+from article_maker.experiment import CodeProvenance, ExecutionEnvironment, Experiment
 from article_maker.planning import AuthorizationRequirement, PlanningTaskKind
 from article_maker.planning_materialization import (
     PlannedPlanningTask,
@@ -35,6 +36,18 @@ def claim(claim_id: str) -> Claim:
         statement="A bounded candidate statement.",
         status=ClaimStatus.CANDIDATE,
         proposed_by=attribution(),
+    )
+
+
+def experiment(experiment_id: str) -> Experiment:
+    return Experiment(
+        schema_version="1.0",
+        experiment_id=experiment_id,
+        title="Bounded experiment",
+        objective="Generate a bounded result.",
+        proposed_by=attribution(),
+        expected_code=CodeProvenance(git_revision="abcdef0"),
+        expected_environment=ExecutionEnvironment(runtime="python-3.11"),
     )
 
 
@@ -173,13 +186,7 @@ def test_execute_persists_exact_reviewed_task_without_changing_authority(
 ) -> None:
     materializer = PlanningProposalMaterializer(tmp_path)
     experiment_candidate = PlanningProposalBuilder._experiment_candidate(
-        __import__("article_maker.experiment", fromlist=["Experiment"]).Experiment(
-            schema_version="1.0",
-            experiment_id="exp-materialize-human-gated",
-            title="Bounded experiment",
-            objective="Generate a bounded result.",
-            proposed_by=attribution(),
-        )
+        experiment("exp-materialize-human-gated")
     )
     monkeypatch.setattr(
         materializer.proposal_builder,
@@ -223,7 +230,10 @@ def test_execute_rejects_conflict_and_post_write_failure_rolls_back(
     materializer.planning_registry.save(available[0].task)
     with pytest.raises(PlanningMaterializationConflictError, match="already exists"):
         materializer.execute(plan, reviewed_digest=digest)
-    (materializer.planning_registry.tasks_dir / f"{available[0].task.planning_task_id}.json").unlink()
+    (
+        materializer.planning_registry.tasks_dir
+        / f"{available[0].task.planning_task_id}.json"
+    ).unlink()
 
     monkeypatch.setattr(
         materializer.planning_registry,
