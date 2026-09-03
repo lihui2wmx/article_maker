@@ -72,6 +72,7 @@ article_maker/
 │   ├── questions/
 │   ├── hypotheses/
 │   ├── decisions/
+│   ├── planning_tasks/       # bounded PlanningTask records
 │   └── logs/
 ├── literature/
 │   ├── sources/
