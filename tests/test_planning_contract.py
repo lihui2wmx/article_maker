@@ -22,6 +22,7 @@ from article_maker import (
     PlanningTaskStatus,
     ProposalAttribution,
     ProposalSource,
+    ResearchStateRegistry,
 )
 
 PLANNING_SCHEMA = json.loads(
@@ -145,7 +146,11 @@ def test_typed_references_validate_internal_id_grammar() -> None:
         "reference_type": "experiment",
         "reference_id": "clm-not-an-experiment",
     }
-    reference_schema = {"$ref": "#/$defs/planning_reference", "$defs": PLANNING_SCHEMA["$defs"]}
+    reference_schema = {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$ref": "#/$defs/planning_reference",
+        "$defs": PLANNING_SCHEMA["$defs"],
+    }
     with pytest.raises(SchemaValidationError):
         Draft202012Validator(reference_schema).validate(bad_payload)
 
@@ -187,7 +192,7 @@ def test_task_dependencies_reject_invalid_duplicate_and_self_ids() -> None:
 
 
 def test_human_gated_execution_states_require_decision_binding() -> None:
-    payload = proposed_task().model_dump()
+    payload = proposed_task().model_dump(mode="json")
     payload.update(
         authorization_requirement="human",
         status="ready",
@@ -196,11 +201,9 @@ def test_human_gated_execution_states_require_decision_binding() -> None:
     with pytest.raises(ValidationError):
         PlanningTask(**payload)
     with pytest.raises(SchemaValidationError):
-        Draft202012Validator(PLANNING_SCHEMA).validate(
-            PlanningTask.model_construct(**payload).model_dump(mode="json")
-        )
+        Draft202012Validator(PLANNING_SCHEMA).validate(payload)
 
-    payload = proposed_task().model_dump()
+    payload = proposed_task().model_dump(mode="json")
     payload.update(
         authorization_requirement="human",
         status="proposed",
@@ -208,22 +211,28 @@ def test_human_gated_execution_states_require_decision_binding() -> None:
     )
     with pytest.raises(ValidationError):
         PlanningTask(**payload)
+    with pytest.raises(SchemaValidationError):
+        Draft202012Validator(PLANNING_SCHEMA).validate(payload)
 
 
 def test_non_gated_tasks_cannot_carry_human_decisions_or_rejected_status() -> None:
-    payload = proposed_task().model_dump()
+    payload = proposed_task().model_dump(mode="json")
     payload["governing_decision_id"] = "dec-unexpected-authorization"
     with pytest.raises(ValidationError):
         PlanningTask(**payload)
+    with pytest.raises(SchemaValidationError):
+        Draft202012Validator(PLANNING_SCHEMA).validate(payload)
 
-    payload = proposed_task().model_dump()
+    payload = proposed_task().model_dump(mode="json")
     payload["status"] = "rejected"
     with pytest.raises(ValidationError):
         PlanningTask(**payload)
+    with pytest.raises(SchemaValidationError):
+        Draft202012Validator(PLANNING_SCHEMA).validate(payload)
 
 
 def test_experiment_execution_is_always_human_gated_and_scoped_to_experiment() -> None:
-    payload = experiment_execution_task().model_dump()
+    payload = experiment_execution_task().model_dump(mode="json")
     payload["authorization_requirement"] = "none"
     payload["governing_decision_id"] = None
     with pytest.raises(ValidationError):
@@ -231,7 +240,7 @@ def test_experiment_execution_is_always_human_gated_and_scoped_to_experiment() -
     with pytest.raises(SchemaValidationError):
         Draft202012Validator(PLANNING_SCHEMA).validate(payload)
 
-    payload = experiment_execution_task().model_dump()
+    payload = experiment_execution_task().model_dump(mode="json")
     payload["references"] = []
     with pytest.raises(ValidationError):
         PlanningTask(**payload)
@@ -240,14 +249,14 @@ def test_experiment_execution_is_always_human_gated_and_scoped_to_experiment() -
 
 
 def test_completion_refs_only_exist_on_completed_tasks() -> None:
-    payload = proposed_task().model_dump()
+    payload = proposed_task().model_dump(mode="json")
     payload["status"] = "completed"
     with pytest.raises(ValidationError):
         PlanningTask(**payload)
     with pytest.raises(SchemaValidationError):
         Draft202012Validator(PLANNING_SCHEMA).validate(payload)
 
-    payload = proposed_task().model_dump()
+    payload = proposed_task().model_dump(mode="json")
     payload["completion_refs"] = [
         {"reference_type": "artifact", "reference_id": "art-premature-output"}
     ]
@@ -258,7 +267,9 @@ def test_completion_refs_only_exist_on_completed_tasks() -> None:
 
 
 def test_completed_experiment_execution_requires_experiment_run_completion_ref() -> None:
-    payload = experiment_execution_task(status=PlanningTaskStatus.COMPLETED).model_dump()
+    payload = experiment_execution_task(status=PlanningTaskStatus.COMPLETED).model_dump(
+        mode="json"
+    )
     payload["completion_refs"] = [
         {"reference_type": "artifact", "reference_id": "art-run-output"}
     ]
@@ -268,8 +279,8 @@ def test_completed_experiment_execution_requires_experiment_run_completion_ref()
         Draft202012Validator(PLANNING_SCHEMA).validate(payload)
 
 
-def test_planning_task_decision_is_human_authority_and_schema_valid() -> None:
-    decision = Decision(
+def planning_decision() -> Decision:
+    return Decision(
         schema_version="1.0",
         decision_id="dec-authorize-planning-task",
         subject_type=DecisionSubjectType.PLANNING_TASK,
@@ -280,12 +291,22 @@ def test_planning_task_decision_is_human_authority_and_schema_valid() -> None:
         decided_at=datetime(2026, 9, 3, 1, 0, tzinfo=timezone.utc),
         rationale="Authorize one bounded execution of the referenced Experiment.",
     )
+
+
+def test_planning_task_decision_is_human_authority_and_schema_valid() -> None:
+    decision = planning_decision()
     Draft202012Validator(RESEARCH_STATE_SCHEMA).validate(decision.model_dump(mode="json"))
 
     payload = decision.model_dump()
     payload["subject_id"] = "exp-not-a-planning-task"
     with pytest.raises(ValidationError):
         Decision(**payload)
+
+
+def test_phase2_registry_defers_planning_task_decision_resolution(tmp_path: Path) -> None:
+    registry = ResearchStateRegistry(tmp_path)
+    registry.save_decision(planning_decision())
+    assert registry.audit() == []
 
 
 def test_task_completion_is_not_scientific_resolution() -> None:
