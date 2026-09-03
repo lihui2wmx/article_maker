@@ -5,6 +5,11 @@ from pathlib import Path
 
 import pytest
 
+from article_maker import PlanningProposalBuilder as ExportedPlanningProposalBuilder
+from article_maker import PlanningProposalCandidate as ExportedPlanningProposalCandidate
+from article_maker import PlanningProposalError as ExportedPlanningProposalError
+from article_maker import PlanningProposalReason as ExportedPlanningProposalReason
+from article_maker import PlanningProposalSourceAuditError as ExportedPlanningProposalSourceAuditError
 from article_maker.claim_evidence import (
     Claim,
     ClaimEvidenceLink,
@@ -12,6 +17,7 @@ from article_maker.claim_evidence import (
     EvidenceRelation,
     RelationStatus,
 )
+from article_maker.claim_registry import ClaimEvidenceAuditFinding, GraphAuditSeverity
 from article_maker.experiment import (
     CodeProvenance,
     ExecutionEnvironment,
@@ -37,6 +43,8 @@ from article_maker.planning import (
 )
 from article_maker.planning_proposals import (
     PlanningProposalBuilder,
+    PlanningProposalCandidate,
+    PlanningProposalError,
     PlanningProposalReason,
     PlanningProposalSourceAuditError,
 )
@@ -84,7 +92,9 @@ def note(note_id: str, citation_id: str) -> LiteratureNote:
                 kind=LiteratureNoteKind.SUMMARY,
                 statement_type=LiteratureStatementType.SOURCE_REPORT,
                 text="The source reports a bounded finding.",
-                source_refs=[LiteratureSourceRef(artifact_id="art-source-paper", locator="p.1")],
+                source_refs=[
+                    LiteratureSourceRef(artifact_id="art-source-paper", locator="p.1")
+                ],
             )
         ],
     )
@@ -119,6 +129,14 @@ def completed_run(run_id: str, record: Experiment) -> ExperimentRun:
     )
 
 
+def test_package_root_exports_phase6c_public_api() -> None:
+    assert ExportedPlanningProposalBuilder is PlanningProposalBuilder
+    assert ExportedPlanningProposalCandidate is PlanningProposalCandidate
+    assert ExportedPlanningProposalError is PlanningProposalError
+    assert ExportedPlanningProposalReason is PlanningProposalReason
+    assert ExportedPlanningProposalSourceAuditError is PlanningProposalSourceAuditError
+
+
 def test_structural_gaps_produce_deterministic_bounded_candidates() -> None:
     claim_record = claim("clm-unlinked")
     citation_record = citation("cit-unnoted")
@@ -149,7 +167,10 @@ def test_structural_gaps_produce_deterministic_bounded_candidates() -> None:
         if candidate.reason is PlanningProposalReason.EXPERIMENT_WITHOUT_COMPLETED_RUN
     )
     assert experiment_candidate.task.kind is PlanningTaskKind.EXPERIMENT_EXECUTION
-    assert experiment_candidate.task.authorization_requirement is AuthorizationRequirement.HUMAN
+    assert (
+        experiment_candidate.task.authorization_requirement
+        is AuthorizationRequirement.HUMAN
+    )
     assert experiment_candidate.task.governing_decision_id is None
 
 
@@ -199,7 +220,27 @@ def test_existing_deterministic_task_suppresses_duplicate_proposal() -> None:
     ) == []
 
 
-def test_repository_proposal_refuses_dirty_audit_state_and_does_not_repair_it(tmp_path: Path) -> None:
+def test_advisory_audit_warning_does_not_block_proposal_construction() -> None:
+    warning = ClaimEvidenceAuditFinding(
+        record_id="clm-warning",
+        code="approved-claim-without-accepted-support",
+        message="advisory scientific-state warning",
+        severity=GraphAuditSeverity.WARNING,
+    )
+    error = ClaimEvidenceAuditFinding(
+        record_id="clm-error",
+        code="missing-research-question",
+        message="structural error",
+        severity=GraphAuditSeverity.ERROR,
+    )
+
+    assert PlanningProposalBuilder._blocking_findings([warning]) == []
+    assert PlanningProposalBuilder._blocking_findings([warning, error]) == [error]
+
+
+def test_repository_proposal_refuses_dirty_audit_state_and_does_not_repair_it(
+    tmp_path: Path,
+) -> None:
     tasks_dir = tmp_path / "research" / "planning_tasks"
     tasks_dir.mkdir(parents=True)
     malformed = tasks_dir / "ptask-malformed.json"
@@ -207,7 +248,10 @@ def test_repository_proposal_refuses_dirty_audit_state_and_does_not_repair_it(tm
     before = malformed.read_bytes()
 
     builder = PlanningProposalBuilder(tmp_path)
-    with pytest.raises(PlanningProposalSourceAuditError, match="planning:ptask-malformed:invalid-record"):
+    with pytest.raises(
+        PlanningProposalSourceAuditError,
+        match="planning:ptask-malformed:invalid-record",
+    ):
         builder.propose_from_repository()
 
     assert malformed.read_bytes() == before
