@@ -13,8 +13,8 @@ Detailed historical phase notes remain available in Git history. This compact fo
 
 ## Current repository state — 2026-09-03
 
-**Active next phase:** Phase 6D — reviewed PlanningProposal materialization into canonical PlanningTask state  
-**Status:** READY  
+**Active phase:** Phase 6D — reviewed PlanningProposal materialization into canonical PlanningTask state  
+**Status:** IMPLEMENTED — latest-head integration gates pending  
 **Default branch:** `main`
 
 ### Completed milestones
@@ -39,86 +39,66 @@ Detailed historical phase notes remain available in Git history. This compact fo
 | Phase 6A — typed research-planning task contracts | COMPLETE | PR #16 |
 | Phase 6B — PlanningTask registry/authorization audit | COMPLETE | PR #17 |
 | Phase 6C — deterministic PlanningTask proposals | COMPLETE | PR #18 |
+| Phase 6D — reviewed PlanningProposal materialization | INTEGRATION PENDING | PR #19 |
 
-## Phase 6C closure
+## AI-native repository product boundary
 
-**Branch:** `phase/6c-planning-proposals`  
-**Integration carrier:** PR #18  
-**Initial PR CI:** `33705962043` — success  
-**Closure code/test CI:** `33768609934` — success  
-**Final handoff-head CI:** `33768731200` — success  
-**Integrated main commit:** `1d4f023d4f7cc3f7dba96dae34c54dafd0b9624e`
+`article_maker` is handed directly to an AI agent, which reads and operates the repository to perform research and manuscript work. The canonical execution direction is **AI operates repository**, not **repository calls AI**.
 
-Phase 6C added:
+This boundary is durable in `PROJECT.md`, `docs/ARCHITECTURE.md`, and `docs/decisions/ADR-0016-ai-native-repository-execution-model.md`. Core development must prioritize agent-legible repository instructions, deterministic tools, explicit canonical state, provenance, reviewable transitions, and resumable handoff. Model/provider SDKs and embedded agent frameworks are not planned core dependencies.
 
-- framework-neutral `PlanningProposalCandidate`, `PlanningProposalReason`, and `PlanningProposalBuilder`;
-- pure deterministic `propose_from_state()` over already-audited canonical objects;
-- repository-backed `propose_from_repository()` that blocks structural audit errors while preserving advisory warnings as usable planning state;
-- stable proposal IDs derived from `(proposal_reason, source_id)`;
-- objective structural-gap proposals for unlinked active Claims, unnoted Citations, and Experiments without completed runs;
-- hard human authorization for experiment-execution candidates;
-- duplicate suppression against existing deterministic PlanningTask IDs;
-- package-root exports and focused regression tests;
-- `docs/PLANNING_PROPOSALS.md`;
-- the bounded-review correction that advisory warnings must not be treated as structural errors.
+## Phase 6D — reviewed PlanningProposal materialization
 
-### AI-native repository architecture correction
+**Branch:** `phase/6d-planning-proposal-materialization`  
+**Integration carrier:** PR #19  
+**Initial PR CI:** `33769359626` — success  
+**Bounded-review fix CI:** `33769482936` — success
 
-During Phase 6C closure, the human researcher clarified the final product boundary: `article_maker` is intended to be handed directly to an AI agent, which reads and operates the repository to perform research and manuscript work. The repository is not intended to invoke AI through LLM/provider APIs as part of its core product runtime.
+### Implemented
 
-This is now canonical in `PROJECT.md`, `docs/ARCHITECTURE.md`, and `docs/decisions/ADR-0016-ai-native-repository-execution-model.md`.
+- `PlanningProposalMaterializer` as a repository-native deterministic bridge from Phase 6C candidates to Phase 6B canonical `PlanningTask` state;
+- explicit `PlanningMaterializationSelection` by deterministic PlanningTask identity;
+- read-only dry-run `PlanningMaterializationPlan` construction;
+- exact `PlanningTask` previews plus proposal reason/source binding;
+- deterministic candidate and whole-plan digests;
+- execution bound to an explicitly reviewed digest;
+- current repository proposal recomputation before writes;
+- stale proposal, preview tamper, and existing-task conflict rejection;
+- exact PlanningTask persistence and reload equality verification;
+- post-write PlanningTask audit plus best-effort rollback of newly written records on in-process failure;
+- preservation of Phase 6A/6C authorization semantics, especially proposed human-gated experiment execution;
+- public package-root exports;
+- `docs/PLANNING_MATERIALIZATION.md` and ADR-0017;
+- focused tests for explicit selection/read-only planning, deterministic subsets, review digest binding, stale/tamper rejection, conflicts, exact persistence, human-gate preservation, post-write rollback, duplicate reviewed-plan entries, and package exports.
 
-The execution direction is **AI operates repository**, not **repository calls AI**. Future development should prioritize agent-legible repository instructions, deterministic tools, explicit canonical state, provenance, reviewable transitions, and resumable handoff. Model/provider SDKs and embedded agent frameworks are not planned core dependencies.
+### Bounded review finding
 
-### Phase 6C exit conditions
+Integration review found that a caller could manually construct a `PlanningMaterializationPlan` containing the same PlanningTask identity more than once even though `plan()` itself never emits duplicates. Without execution-time plan-integrity checks, such a manually constructed reviewed plan could write the same task twice in one batch. Execution now rejects duplicate PlanningTask IDs and duplicate `(proposal_reason, source_id)` sources before repository mutation.
 
-- [x] deterministic proposal input/output layer exists;
-- [x] structural repository audit gate precedes repository-backed proposals;
-- [x] advisory audit warnings remain available to planning rather than blocking it;
-- [x] initial objective structural-gap rules exist;
-- [x] proposal/persistence/execution boundaries remain separate;
-- [x] experiment-execution proposals preserve hard human authorization;
-- [x] deterministic tests and package-root exports exist;
-- [x] proposal documentation and AI-native architecture ADR exist;
-- [x] bounded diff review completed;
-- [x] final PR-head CI passes (`33768731200`);
-- [x] PR #18 squash merged (`1d4f023d4f7cc3f7dba96dae34c54dafd0b9624e`).
+### Authority boundary
 
-## Next bounded increment — Phase 6D: reviewed PlanningProposal materialization
+Materialization records bounded work state only. It does not approve the scientific action represented by a task. In particular, materializing an `experiment_execution` proposal leaves it `status=proposed`, `authorization_requirement=human`, with no governing Decision; later explicit human authorization is still required before it can become execution-eligible.
 
-**Status:** READY after Phase 6C integration.
+Materialization does not approve Claims, accept Hypotheses, interpret ambiguous Evidence, assert novelty, schedule or execute work, select a venue, approve manuscript content, or authorize submission.
 
-### Objective
+### Phase 6D closure checklist
 
-Provide a deterministic, review-bound path by which an external AI operator can present Phase 6C proposal candidates for explicit selection and then materialize only the reviewed selections into canonical `PlanningTask` repository state. This bridges advisory proposal construction to durable work state without scheduling or executing work.
+- [x] explicit proposal selection is required before writes;
+- [x] planning is read-only and deterministic;
+- [x] exact proposal/source/task previews are digest-bound;
+- [x] execution recomputes current proposals and rejects stale/tampered state;
+- [x] existing PlanningTask conflicts are rejected;
+- [x] duplicate manually constructed reviewed-plan entries are rejected;
+- [x] only exact reviewed PlanningTask previews are persisted;
+- [x] post-write reload/audit and rollback behavior exist;
+- [x] human authorization semantics are preserved;
+- [x] package-root exports, tests, documentation, and ADR exist;
+- [x] initial PR CI passes (`33769359626`);
+- [x] bounded-review fix CI passes (`33769482936`);
+- [ ] latest-head CI passes after package exports/handoff update;
+- [ ] PR #19 is marked ready/reviewed and merged;
+- [ ] merged-main CI passes.
 
-### Initial boundary
+## Next bounded task
 
-Phase 6D should at minimum:
-
-- consume deterministic Phase 6C proposal candidates from current audited repository state;
-- build a reviewable selection/materialization plan containing exact candidate identities, task previews, source-state binding, and a stable digest;
-- require explicit selection before any PlanningTask write;
-- re-audit/recompute source proposals at execution time and reject stale or tampered plans;
-- persist only exact reviewed PlanningTask previews through the existing Phase 6B registry;
-- reject conflicts rather than silently overwrite existing PlanningTask records;
-- preserve existing human authorization requirements, especially for experiment execution;
-- verify persisted records and run post-write PlanningTask audit;
-- remain directly usable by an external AI operator through repository-native Python/CLI surfaces rather than any model/provider API.
-
-### Human authority boundary
-
-Materializing a candidate records bounded work state; it does not itself approve a scientific Claim, accept a Hypothesis, interpret ambiguous Evidence, assert novelty, authorize an experiment execution task, choose a venue, approve manuscript content, or authorize submission. Where a selected task changes scientific direction or requires a human gate under existing contracts, the corresponding human Decision remains separately required.
-
-### Non-goals
-
-Do not introduce in Phase 6D:
-
-- LLM/provider API integrations or model SDKs;
-- embedded autonomous-agent frameworks;
-- automatic acceptance of every proposal;
-- scheduling, workers, or execution;
-- experiment execution;
-- probabilistic proposal ranking;
-- automatic scientific approval or novelty assertions;
-- manuscript generation or submission automation.
+Complete Phase 6D integration only: verify latest-head CI after package exports and canonical handoff updates, perform a final bounded PR diff review, update PR #19 validation metadata, mark it ready, merge after gates are green, verify merged-main CI, then close Phase 6D and activate the next bounded phase. Do not add scheduling, workers, task execution, model/provider API integration, embedded agent runtimes, manuscript generation, or submission automation in this closure increment.
