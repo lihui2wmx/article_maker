@@ -2,9 +2,11 @@
 
 ## Mission
 
-`article_maker` is a repository-centric research operating system for AI-assisted scientific work. It turns heterogeneous research artifacts—papers, notes, slides, code, data, experiment outputs, figures, and manuscript drafts—into an auditable research state from which specialized AI agents can help plan research, construct arguments, write LaTeX manuscripts, review claims, and propose follow-up work.
+`article_maker` is a repository-centric, AI-native research operating system for scientific work. It is designed to be handed directly to an AI agent together with heterogeneous research artifacts—papers, notes, slides, code, data, experiment outputs, figures, and manuscript drafts—so the agent can read the repository contract, construct an auditable research state, plan bounded research work, build arguments, write LaTeX manuscripts, review claims, and propose follow-up work.
 
-The system optimizes for scientific quality, traceability, reproducibility, and retained human authority rather than maximum autonomous text generation.
+The repository is the product boundary: it should enable a capable external AI agent to operate directly over version-controlled state and deterministic tooling. `article_maker` is not intended to invoke AI models through LLM/provider APIs as part of its core runtime.
+
+The system optimizes for scientific quality, traceability, reproducibility, agent legibility, resumable handoff, and retained human authority rather than maximum autonomous text generation.
 
 ## Core principles
 
@@ -14,7 +16,7 @@ The system optimizes for scientific quality, traceability, reproducibility, and 
 4. **Human scientific authority.** Agents may inspect, propose, execute bounded tasks, critique, and draft. Humans retain approval authority over research questions, hypotheses, substantive claims, interpretation, experimental direction, and submission.
 5. **Independent review.** Writing and review are separate roles and should use fresh context where practical to reduce correlated failure.
 6. **Reproducibility over convenience.** Numerical results and figures should be generated from executable workflows rather than manually transcribed into manuscripts.
-7. **Model/provider independence.** Domain objects and workflow state must not depend on a particular LLM vendor or agent framework.
+7. **AI-native, provider-independent operation.** A capable external AI agent should be able to understand and operate the repository directly from version-controlled instructions, schemas, state, and tools. Core product behavior must not depend on a particular LLM vendor, provider API, model SDK, or embedded agent framework.
 8. **Incremental development.** Every phase has explicit exit conditions; new autonomy is added only after the underlying state model is auditable.
 
 ## Primary domain objects
@@ -68,19 +70,19 @@ Add bibliographic extraction, structured paper notes, citation graph constructio
 Connect experiment configurations, code revisions, outputs, tables, figures, and manuscript values.
 
 ### Phase 6 — Research planning agents
-Allow agents to identify weak claims, missing evidence, high-value experiments, theoretical gaps, and literature gaps.
+Allow an external AI operator to identify weak claims, missing evidence, high-value experiments, theoretical gaps, and literature gaps through repository-native planning contracts and deterministic tooling.
 
 ### Phase 7 — Scientific writing
-Generate argument plans and complete LaTeX manuscript projects from approved research state and venue profiles.
+Enable an external AI operator to generate argument plans and complete LaTeX manuscript projects from approved research state and venue profiles.
 
 ### Phase 8 — Review council
-Add scientific reviewer, adversarial reviewer, statistician, citation auditor, and reproducibility reviewer roles.
+Define repository-native scientific reviewer, adversarial reviewer, statistician, citation auditor, and reproducibility reviewer roles that can be executed by independent AI contexts where practical.
 
 ### Phase 9 — Venue profiles
 Represent journal expectations, manuscript structure, rhetorical conventions, and quality gates without copying individual authors' prose.
 
 ### Phase 10 — Closed research/manuscript loop
-Feed review findings back into structured research tasks while preserving human approval gates.
+Feed review findings back into structured research tasks while preserving human approval gates and repository-resumable state.
 
 ## Phase 0 exit conditions
 
