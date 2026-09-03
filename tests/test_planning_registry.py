@@ -144,7 +144,7 @@ def test_missing_typed_and_completion_references_are_audited(tmp_path: Path) -> 
             references=[
                 PlanningReference(
                     reference_type=PlanningReferenceType.CLAIM,
-                    reference_id="claim-not-present",
+                    reference_id="clm-not-present",
                 )
             ],
         )
