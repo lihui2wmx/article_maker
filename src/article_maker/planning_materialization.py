@@ -123,6 +123,19 @@ class PlanningProposalMaterializer:
             result[task_id] = candidate
         return result
 
+    @staticmethod
+    def _validate_plan_entries(entries: Sequence[PlannedPlanningTask]) -> None:
+        task_ids = [entry.task.planning_task_id for entry in entries]
+        if len(task_ids) != len(set(task_ids)):
+            raise PlanningMaterializationSelectionError(
+                "reviewed materialization plan must not contain duplicate PlanningTask IDs"
+            )
+        source_keys = [(entry.proposal_reason, entry.source_id) for entry in entries]
+        if len(source_keys) != len(set(source_keys)):
+            raise PlanningMaterializationSelectionError(
+                "reviewed materialization plan must not contain duplicate proposal sources"
+            )
+
     def _assert_unoccupied(self, planning_task_id: str) -> None:
         try:
             self.planning_registry.load(planning_task_id)
@@ -169,6 +182,7 @@ class PlanningProposalMaterializer:
             )
 
         entries.sort(key=lambda entry: entry.task.planning_task_id)
+        self._validate_plan_entries(entries)
         return PlanningMaterializationPlan(entries=tuple(entries))
 
     def execute(
@@ -188,6 +202,7 @@ class PlanningProposalMaterializer:
             raise PlanningMaterializationSelectionError(
                 "cannot execute an empty PlanningProposal materialization plan"
             )
+        self._validate_plan_entries(snapshot.entries)
 
         current_candidates = self.proposal_builder.propose_from_repository()
         current_by_id = self._candidate_map(current_candidates)
