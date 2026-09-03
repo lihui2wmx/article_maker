@@ -131,6 +131,12 @@ from .planning import (
     PlanningTaskScope,
     PlanningTaskStatus,
 )
+from .planning_registry import (
+    PlanningTaskAuditFinding,
+    PlanningTaskNotFoundError,
+    PlanningTaskRegistry,
+    PlanningTaskRegistryError,
+)
 from .registration import (
     ArtifactConflictError,
     ArtifactNotFoundError,
@@ -269,8 +275,12 @@ __all__ = [
     "PlanningReference",
     "PlanningReferenceType",
     "PlanningTask",
+    "PlanningTaskAuditFinding",
     "PlanningTaskKind",
+    "PlanningTaskNotFoundError",
     "PlanningTaskPriority",
+    "PlanningTaskRegistry",
+    "PlanningTaskRegistryError",
     "PlanningTaskScope",
     "PlanningTaskStatus",
     "PostWriteAuditError",
