@@ -169,15 +169,6 @@
       },
       "allOf": [
         {
-          "not": {
-            "properties": {
-              "depends_on_task_ids": {
-                "contains": {"$data": "1/planning_task_id"}
-              }
-            }
-          }
-        },
-        {
           "if": {
             "properties": {"status": {"const": "completed"}},
             "required": ["status"]
