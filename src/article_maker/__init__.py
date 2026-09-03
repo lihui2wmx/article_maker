@@ -62,6 +62,13 @@ from .experiment import (
     RunTermination,
     experiment_spec_digest,
 )
+from .experiment_registry import (
+    ExperimentAuditFinding,
+    ExperimentAuditSeverity,
+    ExperimentNotFoundError,
+    ExperimentRegistry,
+    ExperimentRegistryError,
+)
 from .literature import (
     BibliographicAuthor,
     Citation,
@@ -182,6 +189,11 @@ __all__ = [
     "EvidenceSourceRef",
     "ExecutionEnvironment",
     "Experiment",
+    "ExperimentAuditFinding",
+    "ExperimentAuditSeverity",
+    "ExperimentNotFoundError",
+    "ExperimentRegistry",
+    "ExperimentRegistryError",
     "ExperimentRun",
     "ExperimentRunStatus",
     "GraphAuditSeverity",
