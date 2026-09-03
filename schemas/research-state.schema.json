@@ -14,6 +14,7 @@
     "decision_id": {"type": "string", "pattern": "^dec-[a-z0-9][a-z0-9._-]{2,63}$"},
     "claim_id": {"type": "string", "pattern": "^clm-[a-z0-9][a-z0-9._-]{2,63}$"},
     "claim_evidence_link_id": {"type": "string", "pattern": "^cel-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "planning_task_id": {"type": "string", "pattern": "^ptask-[a-z0-9][a-z0-9._-]{2,63}$"},
     "artifact_id": {"type": "string", "pattern": "^art-[a-z0-9][a-z0-9._-]{2,63}$"},
     "artifact_refs": {
       "type": "array",
@@ -89,7 +90,7 @@
       "properties": {
         "schema_version": {"const": "1.0"},
         "decision_id": {"$ref": "#/$defs/decision_id"},
-        "subject_type": {"enum": ["research_question", "hypothesis", "claim", "claim_evidence_link"]},
+        "subject_type": {"enum": ["research_question", "hypothesis", "claim", "claim_evidence_link", "planning_task"]},
         "subject_id": {"type": "string"},
         "outcome": {"enum": ["approve", "reject", "supersede"]},
         "authority": {"const": "human"},
@@ -118,6 +119,10 @@
         {
           "if": {"properties": {"subject_type": {"const": "claim_evidence_link"}}, "required": ["subject_type"]},
           "then": {"properties": {"subject_id": {"$ref": "#/$defs/claim_evidence_link_id"}}}
+        },
+        {
+          "if": {"properties": {"subject_type": {"const": "planning_task"}}, "required": ["subject_type"]},
+          "then": {"properties": {"subject_id": {"$ref": "#/$defs/planning_task_id"}}}
         }
       ]
     }

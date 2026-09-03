@@ -121,6 +121,16 @@ from .literature_registry import (
     LiteratureRegistry,
     LiteratureRegistryError,
 )
+from .planning import (
+    AuthorizationRequirement,
+    PlanningReference,
+    PlanningReferenceType,
+    PlanningTask,
+    PlanningTaskKind,
+    PlanningTaskPriority,
+    PlanningTaskScope,
+    PlanningTaskStatus,
+)
 from .registration import (
     ArtifactConflictError,
     ArtifactNotFoundError,
@@ -160,6 +170,7 @@ from .scientific_ids import (
     validate_experiment_id,
     validate_experiment_run_id,
     validate_literature_note_id,
+    validate_planning_task_id,
 )
 
 __all__ = [
@@ -174,6 +185,7 @@ __all__ = [
     "ArtifactStage",
     "ArtifactStatus",
     "AuditFinding",
+    "AuthorizationRequirement",
     "BatchApprovalError",
     "BatchExecutionError",
     "BatchExecutionResult",
@@ -254,6 +266,13 @@ __all__ = [
     "PlannedExperimentEvidence",
     "PlannedLiteratureEvidence",
     "PlannedRegistration",
+    "PlanningReference",
+    "PlanningReferenceType",
+    "PlanningTask",
+    "PlanningTaskKind",
+    "PlanningTaskPriority",
+    "PlanningTaskScope",
+    "PlanningTaskStatus",
     "PostWriteAuditError",
     "ProducerType",
     "ProposalAttribution",
@@ -292,6 +311,7 @@ __all__ = [
     "validate_experiment_run_id",
     "validate_hypothesis_id",
     "validate_literature_note_id",
+    "validate_planning_task_id",
     "validate_repository_path",
     "validate_research_question_id",
 ]

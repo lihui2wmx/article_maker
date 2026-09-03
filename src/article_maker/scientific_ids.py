@@ -9,6 +9,7 @@ _CITATION_ID_RE = re.compile(r"^cit-[a-z0-9][a-z0-9._-]{2,63}$")
 _LITERATURE_NOTE_ID_RE = re.compile(r"^litn-[a-z0-9][a-z0-9._-]{2,63}$")
 _EXPERIMENT_ID_RE = re.compile(r"^exp-[a-z0-9][a-z0-9._-]{2,63}$")
 _EXPERIMENT_RUN_ID_RE = re.compile(r"^exprun-[a-z0-9][a-z0-9._-]{2,63}$")
+_PLANNING_TASK_ID_RE = re.compile(r"^ptask-[a-z0-9][a-z0-9._-]{2,63}$")
 
 
 def validate_claim_id(value: str) -> str:
@@ -63,5 +64,13 @@ def validate_experiment_run_id(value: str) -> str:
     if not _EXPERIMENT_RUN_ID_RE.fullmatch(value):
         raise ValueError(
             "experiment run IDs must match 'exprun-' followed by 3-64 lowercase slug characters"
+        )
+    return value
+
+
+def validate_planning_task_id(value: str) -> str:
+    if not _PLANNING_TASK_ID_RE.fullmatch(value):
+        raise ValueError(
+            "planning task IDs must match 'ptask-' followed by 3-64 lowercase slug characters"
         )
     return value
