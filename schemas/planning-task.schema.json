@@ -1,0 +1,283 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:article-maker:schema:planning-task:1.0",
+  "title": "Planning Task Contract",
+  "description": "Canonical framework-neutral contract for bounded research-planning work proposals.",
+  "$ref": "#/$defs/planning_task",
+  "$defs": {
+    "planning_task_id": {"type": "string", "pattern": "^ptask-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "decision_id": {"type": "string", "pattern": "^dec-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "research_question_id": {"type": "string", "pattern": "^rq-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "hypothesis_id": {"type": "string", "pattern": "^hyp-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "claim_id": {"type": "string", "pattern": "^clm-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "evidence_id": {"type": "string", "pattern": "^ev-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "artifact_id": {"type": "string", "pattern": "^art-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "citation_id": {"type": "string", "pattern": "^cit-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "literature_note_id": {"type": "string", "pattern": "^litn-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "experiment_id": {"type": "string", "pattern": "^exp-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "experiment_run_id": {"type": "string", "pattern": "^exprun-[a-z0-9][a-z0-9._-]{2,63}$"},
+    "metadata": {"type": "object"},
+    "proposal_attribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "actor"],
+      "properties": {
+        "source": {"enum": ["human", "agent"]},
+        "actor": {"type": "string", "pattern": ".*\\S.*"}
+      }
+    },
+    "planning_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reference_type", "reference_id"],
+      "properties": {
+        "reference_type": {
+          "enum": [
+            "research_question",
+            "hypothesis",
+            "claim",
+            "evidence",
+            "artifact",
+            "citation",
+            "literature_note",
+            "experiment",
+            "experiment_run"
+          ]
+        },
+        "reference_id": {"type": "string"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"reference_type": {"const": "research_question"}}, "required": ["reference_type"]},
+          "then": {"properties": {"reference_id": {"$ref": "#/$defs/research_question_id"}}}
+        },
+        {
+          "if": {"properties": {"reference_type": {"const": "hypothesis"}}, "required": ["reference_type"]},
+          "then": {"properties": {"reference_id": {"$ref": "#/$defs/hypothesis_id"}}}
+        },
+        {
+          "if": {"properties": {"reference_type": {"const": "claim"}}, "required": ["reference_type"]},
+          "then": {"properties": {"reference_id": {"$ref": "#/$defs/claim_id"}}}
+        },
+        {
+          "if": {"properties": {"reference_type": {"const": "evidence"}}, "required": ["reference_type"]},
+          "then": {"properties": {"reference_id": {"$ref": "#/$defs/evidence_id"}}}
+        },
+        {
+          "if": {"properties": {"reference_type": {"const": "artifact"}}, "required": ["reference_type"]},
+          "then": {"properties": {"reference_id": {"$ref": "#/$defs/artifact_id"}}}
+        },
+        {
+          "if": {"properties": {"reference_type": {"const": "citation"}}, "required": ["reference_type"]},
+          "then": {"properties": {"reference_id": {"$ref": "#/$defs/citation_id"}}}
+        },
+        {
+          "if": {"properties": {"reference_type": {"const": "literature_note"}}, "required": ["reference_type"]},
+          "then": {"properties": {"reference_id": {"$ref": "#/$defs/literature_note_id"}}}
+        },
+        {
+          "if": {"properties": {"reference_type": {"const": "experiment"}}, "required": ["reference_type"]},
+          "then": {"properties": {"reference_id": {"$ref": "#/$defs/experiment_id"}}}
+        },
+        {
+          "if": {"properties": {"reference_type": {"const": "experiment_run"}}, "required": ["reference_type"]},
+          "then": {"properties": {"reference_id": {"$ref": "#/$defs/experiment_run_id"}}}
+        }
+      ]
+    },
+    "planning_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objective", "completion_criteria"],
+      "properties": {
+        "objective": {"type": "string", "pattern": ".*\\S.*"},
+        "completion_criteria": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": ".*\\S.*"}
+        },
+        "constraints": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": ".*\\S.*"}
+        },
+        "non_goals": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": ".*\\S.*"}
+        }
+      }
+    },
+    "planning_task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "planning_task_id",
+        "kind",
+        "status",
+        "scope",
+        "proposed_by",
+        "rationale"
+      ],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "planning_task_id": {"$ref": "#/$defs/planning_task_id"},
+        "kind": {
+          "enum": [
+            "literature_search",
+            "literature_analysis",
+            "experiment_design",
+            "experiment_execution",
+            "data_analysis",
+            "theory_analysis",
+            "evidence_review",
+            "claim_review",
+            "reproducibility_check",
+            "citation_audit",
+            "other"
+          ]
+        },
+        "status": {
+          "enum": ["proposed", "ready", "in_progress", "blocked", "completed", "cancelled", "rejected"]
+        },
+        "scope": {"$ref": "#/$defs/planning_scope"},
+        "proposed_by": {"$ref": "#/$defs/proposal_attribution"},
+        "priority": {"enum": ["low", "normal", "high", "urgent"]},
+        "rationale": {"type": "string", "pattern": ".*\\S.*"},
+        "references": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/planning_reference"}
+        },
+        "depends_on_task_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/planning_task_id"}
+        },
+        "authorization_requirement": {"enum": ["none", "human"]},
+        "governing_decision_id": {
+          "oneOf": [{"$ref": "#/$defs/decision_id"}, {"type": "null"}]
+        },
+        "completion_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/planning_reference"}
+        },
+        "metadata": {"$ref": "#/$defs/metadata"}
+      },
+      "allOf": [
+        {
+          "not": {
+            "properties": {
+              "depends_on_task_ids": {
+                "contains": {"$data": "1/planning_task_id"}
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"status": {"const": "completed"}},
+            "required": ["status"]
+          },
+          "then": {
+            "required": ["completion_refs"],
+            "properties": {"completion_refs": {"minItems": 1}}
+          },
+          "else": {
+            "properties": {"completion_refs": {"maxItems": 0}}
+          }
+        },
+        {
+          "if": {
+            "properties": {"authorization_requirement": {"const": "none"}},
+            "required": ["authorization_requirement"]
+          },
+          "then": {
+            "properties": {
+              "governing_decision_id": {"type": "null"},
+              "status": {"enum": ["proposed", "ready", "in_progress", "blocked", "completed", "cancelled"]}
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {"required": ["authorization_requirement"]}
+          },
+          "then": {
+            "properties": {
+              "governing_decision_id": {"type": "null"},
+              "status": {"enum": ["proposed", "ready", "in_progress", "blocked", "completed", "cancelled"]}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorization_requirement": {"const": "human"},
+              "status": {"enum": ["ready", "in_progress", "completed", "rejected"]}
+            },
+            "required": ["authorization_requirement", "status"]
+          },
+          "then": {
+            "required": ["governing_decision_id"],
+            "properties": {"governing_decision_id": {"$ref": "#/$defs/decision_id"}}
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorization_requirement": {"const": "human"},
+              "status": {"const": "proposed"}
+            },
+            "required": ["authorization_requirement", "status"]
+          },
+          "then": {
+            "properties": {"governing_decision_id": {"type": "null"}}
+          }
+        },
+        {
+          "if": {
+            "properties": {"kind": {"const": "experiment_execution"}},
+            "required": ["kind"]
+          },
+          "then": {
+            "required": ["authorization_requirement", "references"],
+            "properties": {
+              "authorization_requirement": {"const": "human"},
+              "references": {
+                "contains": {
+                  "type": "object",
+                  "properties": {"reference_type": {"const": "experiment"}},
+                  "required": ["reference_type"]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {"const": "experiment_execution"},
+              "status": {"const": "completed"}
+            },
+            "required": ["kind", "status"]
+          },
+          "then": {
+            "properties": {
+              "completion_refs": {
+                "contains": {
+                  "type": "object",
+                  "properties": {"reference_type": {"const": "experiment_run"}},
+                  "required": ["reference_type"]
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
