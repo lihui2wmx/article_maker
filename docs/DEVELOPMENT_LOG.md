@@ -13,8 +13,8 @@ Detailed historical phase notes remain available in Git history. This compact fo
 
 ## Current repository state — 2026-09-03
 
-**Active phase:** Phase 5C — reviewed Experiment-output-to-Evidence proposal bridge  
-**Status:** IMPLEMENTED — PR #15 initial CI passed; latest-head/integration gates pending  
+**Active next phase:** Phase 6A — typed research-planning task contracts  
+**Status:** READY  
 **Default branch:** `main`
 
 ### Completed milestones
@@ -35,81 +35,44 @@ Detailed historical phase notes remain available in Git history. This compact fo
 | Phase 4C — reviewed literature-to-Evidence bridge | COMPLETE | PR #12 |
 | Phase 5A — typed Experiment provenance contracts | COMPLETE | PR #13 |
 | Phase 5B — Experiment registry/provenance audit | COMPLETE | PR #14 |
-| Phase 5C — reviewed Experiment-output-to-Evidence bridge | INTEGRATION PENDING | PR #15 |
+| Phase 5C — reviewed Experiment-output-to-Evidence bridge | COMPLETE | PR #15 |
 
-## Phase 5C — reviewed Experiment-output-to-Evidence proposal bridge
+## Phase 5C closure
 
 **Branch:** `phase/5c-experiment-evidence-bridge`  
 **Integration carrier:** PR #15  
-**Initial PR CI:** `33702257494` — success
+**Initial PR CI:** `33702257494` — success  
+**Latest-head PR CI:** `33702321170` — success  
+**Integrated main commit:** `f7c95d8bb9609a8192be7a2a30278985792aa723`  
+**Merged-main CI:** `33702381621` — success
 
-### Implemented
+Phase 5C added deterministic reviewed promotion of explicit ExperimentRun provenance into canonical Evidence with:
 
-- added explicit `ExperimentEvidenceSelection` with Experiment ID, Run ID, Artifact ID, and optional locator;
-- required each selected Artifact to belong to exactly one eligible Run provenance role: output or termination diagnostic;
-- rejected ambiguous selections where the same Artifact is both output and diagnostic provenance;
-- required the Run's `experiment_spec_digest` to match the current canonical Experiment before planning;
-- loaded the selected Artifact manifest and required the Artifact to pass ArtifactRegistry audit, including checksum/path/status drift checks;
-- added deterministic `ev-exp-*` Evidence identity generation;
-- generated mechanical Evidence descriptions without accepting free-form scientific interpretation;
-- mapped output provenance to `EvidenceKind.EXPERIMENT_RESULT` and diagnostic provenance to `EvidenceKind.OTHER`;
-- preserved Experiment ID, Run ID, Experiment spec digest, operational Run status, Artifact ID, provenance role, locator, exact Run digest, and Artifact-manifest digest in bridge metadata;
-- added read-only `ExperimentEvidencePlan` generation and deterministic `experiment_evidence_plan_digest()`;
-- required exact reviewed digest binding before execution;
-- reloaded and revalidated Experiment, Run, and Artifact provenance before any write;
-- regenerated expected Evidence previews and required exact equality, preventing arbitrary Evidence injection even when a modified plan digest is recomputed;
-- rejected existing Evidence identity conflicts;
-- persisted canonical Evidence only during explicit `execute()`;
-- performed post-write exact reload equality and structural Claim/Evidence audit;
-- added best-effort in-process rollback for newly written Evidence files;
-- added filesystem-backed tests for deterministic dry-run planning, failed-run diagnostics, ineligible/ambiguous provenance, stale Experiment specification, reviewed digest enforcement, Run drift, Artifact byte drift, preview tampering, successful persistence, and existing-Evidence conflicts;
-- documented the bridge in `docs/EXPERIMENT_EVIDENCE_BRIDGE.md`;
-- recorded durable decisions in `docs/decisions/ADR-0014-reviewed-experiment-evidence-promotion.md`.
+- explicit Experiment + Run + Artifact + optional locator selections;
+- exact output/diagnostic provenance membership and ambiguity rejection;
+- current Run-to-Experiment spec-digest validation;
+- selected Artifact manifest and filesystem/checksum audit;
+- deterministic `ev-exp-*` Evidence identities and mechanical descriptions;
+- output -> `EvidenceKind.EXPERIMENT_RESULT` and diagnostic -> `EvidenceKind.OTHER`;
+- Experiment ID, Run ID, spec digest, operational run status, Artifact ID/role/locator, Run digest, and Artifact-manifest digest traceability;
+- read-only plan generation and exact reviewed plan digest binding;
+- execution-time Experiment/Run/Artifact stale-state validation;
+- deterministic preview regeneration to reject arbitrary Evidence tampering;
+- explicit canonical Evidence writes only during reviewed execution;
+- existing-Evidence conflict rejection;
+- post-write exact reload and structural Claim/Evidence audit;
+- best-effort in-process rollback for newly written Evidence files.
 
-### Scientific authority boundary
+Scientific interpretation remains separate. Phase 5C does not judge correctness, significance, reproduction success, support/contradiction, approve Claims/Hypotheses, execute experiments, invoke LLM/agent runtimes, or generate manuscript text.
 
-Phase 5C records explicitly selected execution provenance as Evidence material only.
+Documentation:
 
-It does **not**:
-
-- interpret numerical results;
-- judge correctness or statistical significance;
-- determine reproduction success;
-- create or accept ClaimEvidenceLink records;
-- approve/reject Claims or Hypotheses;
-- execute experiments or parameter sweeps;
-- invoke an LLM or agent runtime;
-- generate manuscript text.
-
-`ExperimentRun.status=completed` and `Evidence.kind=experiment_result` remain provenance classifications, not scientific approval states.
-
-### Validation and scope audit
-
-- `main..phase/5c-experiment-evidence-bridge` is ahead-only and limited to bridge runtime, exports, tests, documentation/ADR, and this handoff state;
-- initial PR #15 CI run `33702257494` completed successfully, including all existing Phase 1–5B tests and the new Phase 5C suite;
-- no scheduler, experiment execution adapter, statistical analysis, reproducibility scoring, automatic Claim linking, LLM/agent orchestration, or manuscript generation was introduced.
-
-### Phase 5C exit conditions
-
-- [x] explicit Run + Artifact selection contract exists;
-- [x] output/diagnostic provenance membership is enforced;
-- [x] current Experiment spec digest is required;
-- [x] Artifact manifest/filesystem provenance is checked;
-- [x] deterministic dry-run Evidence previews exist;
-- [x] exact review digest binding exists;
-- [x] stale/tampered source state is rejected before persistence;
-- [x] explicit execution is required for canonical Evidence write;
-- [x] no automatic ClaimEvidenceLink or scientific interpretation is introduced;
-- [x] filesystem-backed tests exist;
-- [x] ADR-0014 records material decisions;
-- [x] bounded-scope audit passes;
-- [x] initial PR CI passes;
-- [ ] latest-head PR CI passes after this handoff update;
-- [ ] PR #15 merged and `main` push CI passes.
+- `docs/EXPERIMENT_EVIDENCE_BRIDGE.md`
+- `docs/decisions/ADR-0014-reviewed-experiment-evidence-promotion.md`
 
 ## Next bounded increment — Phase 6A: typed research-planning task contracts
 
-**Status:** BLOCKED until Phase 5C integration is complete.
+**Status:** READY after Phase 5C integration.
 
 ### Objective
 
